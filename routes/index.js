@@ -1,24 +1,26 @@
-const express = require('express');
+import express from "express";
+import authRoutes from "./auth.routes.js";
+import authMiddleware from "../middlewares/auth.middleware.js";
+import roleMiddleware from "../middlewares/role.middleware.js";
+
 const router = express.Router();
-const authRoutes = require('./auth.routes');
-const authMiddleware = require('../middlewares/auth.middleware');
-const roleMiddleware = require('../middlewares/role.middleware');
 
-router.use('/auth', authRoutes);
+// Auth routes
+router.use("/auth", authRoutes);
 
-router.get('/admin/dashboard',
+// Admin dashboard route (only for ADMIN role)
+router.get(
+  "/admin/dashboard",
   authMiddleware,
-  roleMiddleware('ADMIN'),
+  roleMiddleware("ADMIN"),
   (req, res) => {
     res.json({ message: "Welcome Admin" });
   }
 );
 
-router.get('/user/profile',
-  authMiddleware,
-  (req, res) => {
-    res.json({ message: "Welcome User" });
-  }
-);
+// User profile route (any logged-in user)
+router.get("/user/profile", authMiddleware, (req, res) => {
+  res.json({ message: "Welcome User" });
+});
 
-module.exports = router;
+export default router;

@@ -1,4 +1,4 @@
-import { Sequelize } from "sequelize"
+import { Sequelize } from "sequelize";
 import config from "./config.js";
 
 const sequelize = new Sequelize(
@@ -21,4 +21,4 @@ const testConnection = async () => {
   }
 };
 
-export { sequelize, testConnection }; 
+export { sequelize, testConnection }; // named exports

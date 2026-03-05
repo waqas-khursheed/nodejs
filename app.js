@@ -1,10 +1,11 @@
 import express from "express";
 import { sequelize, testConnection } from "./config/db.js";
-const routes = require('./routes');
+import routes from "./routes/index.js";
 
 const app = express();
+
 app.use(express.json());
-app.use('/api', routes);
+app.use("/api", routes);
 
 const initializeApp = async () => {
   try {

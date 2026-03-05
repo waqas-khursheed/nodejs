@@ -1,7 +1,8 @@
-const authService = require('../services/auth.service');
+import authService from "../services/auth.service.js";
 
 class AuthController {
 
+  // Register a new user
   async register(req, res) {
     try {
       const user = await authService.register(req.body);
@@ -11,6 +12,7 @@ class AuthController {
     }
   }
 
+  // Login an existing user
   async login(req, res) {
     try {
       const { email, password } = req.body;
@@ -22,4 +24,4 @@ class AuthController {
   }
 }
 
-module.exports = new AuthController();
+export default new AuthController();

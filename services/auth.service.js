@@ -1,11 +1,11 @@
-const userRepository = require('../repositories/user.repository');
-const { hashPassword, comparePassword } = require('../utils/hash');
-const { generateToken } = require('../utils/jwt');
+import userRepository from "../repositories/user.repository.js";
+import { hashPassword, comparePassword } from "../utils/hash.js";
+import { generateToken } from "../utils/jwt.js";
 
 class AuthService {
 
+  // Register new user
   async register(data) {
-
     const existingUser = await userRepository.findByEmail(data.email);
     if (existingUser) {
       throw new Error("Email already exists");
@@ -21,8 +21,8 @@ class AuthService {
     return user;
   }
 
+  // Login existing user
   async login(email, password) {
-
     const user = await userRepository.findByEmail(email);
     if (!user) {
       throw new Error("Invalid credentials");
@@ -42,4 +42,4 @@ class AuthService {
   }
 }
 
-module.exports = new AuthService();
+export default new AuthService();
