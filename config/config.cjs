@@ -7,5 +7,5 @@ module.exports = {
     database: process.env.DB_NAME || 'nodejs',
     host: process.env.DB_HOST || '127.0.0.1',
     dialect: 'mysql'
-  }
+  },
 };

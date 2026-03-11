@@ -2,7 +2,7 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('users', {
+    await queryInterface.createTable('brands', {
       id: {
         type: Sequelize.BIGINT.UNSIGNED,
         primaryKey: true,
@@ -12,19 +12,17 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false
       },
-      email: {
+      slug: {
         type: Sequelize.STRING,
-        allowNull: false,
-        unique: true
+        allowNull: true
       },
-      password: {
-        type: Sequelize.STRING,
-        allowNull: false
+      description: {
+        type: Sequelize.TEXT,
+        allowNull: true
       },
-      role: {
-        type: Sequelize.ENUM('USER', 'ADMIN'),
-        allowNull: false,
-        defaultValue: 'USER'
+      status: {
+        type: Sequelize.TINYINT,
+        defaultValue: 1
       },
       created_at: {
         type: Sequelize.DATE,
@@ -40,6 +38,6 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable('users');
+    await queryInterface.dropTable('brands');
   }
 };

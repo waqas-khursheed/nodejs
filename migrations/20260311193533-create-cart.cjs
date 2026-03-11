@@ -2,29 +2,26 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('users', {
+    await queryInterface.createTable('carts', {
       id: {
         type: Sequelize.BIGINT.UNSIGNED,
         primaryKey: true,
         autoIncrement: true
       },
-      name: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
-      email: {
-        type: Sequelize.STRING,
+      user_id: {
+        type: Sequelize.BIGINT.UNSIGNED,
         allowNull: false,
-        unique: true
+        references: {
+          model: 'users',
+          key: 'id'
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
-      password: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
-      role: {
-        type: Sequelize.ENUM('USER', 'ADMIN'),
-        allowNull: false,
-        defaultValue: 'USER'
+      status: {
+        type: Sequelize.TINYINT,
+        defaultValue: 1,
+        comment: '1=active, 0=inactive'
       },
       created_at: {
         type: Sequelize.DATE,
@@ -40,6 +37,6 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable('users');
+    await queryInterface.dropTable('carts');
   }
 };
