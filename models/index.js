@@ -51,4 +51,19 @@ Object.values(models).forEach((model) => {
 });
 
 export { sequelize };
-export default models;
+export const {
+  User,
+  Category,
+  Brand,
+  Product,
+  ProductImage,
+  ProductVariant,
+  ProductReview,
+  Cart,
+  CartItem,
+  Order,
+  OrderItem,
+  Shipment,
+  Wishlist,
+  Coupon
+} = models;
