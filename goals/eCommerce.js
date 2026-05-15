@@ -384,38 +384,74 @@
 // ├── server.js
 // │
 // ├── config/
-// │   ├── database.js
+// │   ├── database.config.js
 // │   ├── app.config.js
-// │   └── jwt.config.js
+// │   ├── jwt.config.js
+// │   └── cors.config.js
 // │
 // ├── modules/
 // │
 // │   ├── auth/
 // │   │   ├── controllers/
+// │   │   │   ├── auth.controller.js
+// │   │   │   └── admin.auth.controller.js
+// │   │   │
 // │   │   ├── services/
+// │   │   │   └── auth.service.js
+// │   │   │
 // │   │   ├── repositories/
+// │   │   │   └── auth.repository.js
+// │   │   │
 // │   │   ├── routes/
+// │   │   │   ├── auth.routes.js
+// │   │   │   └── admin.auth.routes.js
+// │   │   │
 // │   │   ├── validations/
-// │   │   ├── middleware/
+// │   │   │   └── auth.validation.js
+// │   │   │
 // │   │   └── auth.module.js
-// │   │
+// │
 // │   ├── users/
 // │   │   ├── controllers/
+// │   │   │   ├── user.controller.js
+// │   │   │   └── admin.user.controller.js
+// │   │   │
 // │   │   ├── services/
+// │   │   │   └── user.service.js
+// │   │   │
 // │   │   ├── repositories/
+// │   │   │   └── user.repository.js
+// │   │   │
 // │   │   ├── routes/
+// │   │   │   ├── user.routes.js
+// │   │   │   └── admin.user.routes.js
+// │   │   │
 // │   │   ├── validations/
+// │   │   │   └── user.validation.js
+// │   │   │
 // │   │   └── user.module.js
-// │   │
+// │
 // │   ├── products/
 // │   │   ├── controllers/
+// │   │   │   ├── product.controller.js
+// │   │   │   └── admin.product.controller.js
+// │   │   │
 // │   │   ├── services/
+// │   │   │   └── product.service.js
+// │   │   │
 // │   │   ├── repositories/
+// │   │   │   └── product.repository.js
+// │   │   │
 // │   │   ├── routes/
+// │   │   │   ├── product.routes.js
+// │   │   │   └── admin.product.routes.js
+// │   │   │
 // │   │   ├── validations/
+// │   │   │   └── product.validation.js
+// │   │   │
 // │   │   ├── helpers/
 // │   │   └── product.module.js
-// │   │
+// │
 // │   ├── categories/
 // │   ├── brands/
 // │   ├── orders/
@@ -423,23 +459,22 @@
 // │   ├── coupons/
 // │   ├── wishlists/
 // │   ├── reviews/
-// │   ├── rewards/
 // │   ├── notifications/
 // │   ├── banners/
-// │   ├── settings/
-// │   └── cms/
+// │   ├── cms/
+// │   └── settings/
 // │
 // ├── database/
-// │   │
 // │   ├── migrations/
 // │   ├── seeders/
 // │   │
 // │   ├── models/
 // │   │   ├── User.js
+// │   │   ├── Admin.js
 // │   │   ├── Product.js
 // │   │   ├── Category.js
-// │   │   ├── Brand.js
-// │   │   └── etc...
+// │   │   ├── Order.js
+// │   │   └── index.js
 // │   │
 // │   ├── associations/
 // │   │   ├── user.association.js
@@ -450,15 +485,47 @@
 // │   └── index.js
 // │
 // ├── shared/
-// │   ├── helpers/
 // │   ├── middleware/
+// │   │   ├── auth.middleware.js
+// │   │   ├── admin.middleware.js
+// │   │   ├── role.middleware.js
+// │   │   └── error.middleware.js
+// │   │
 // │   ├── utils/
+// │   │   ├── jwt.js
+// │   │   ├── hash.js
+// │   │   ├── logger.js
+// │   │   └── helpers.js
+// │   │
 // │   ├── constants/
+// │   │   ├── roles.js
+// │   │   └── status.js
+// │   │
 // │   ├── services/
-// │   └── responses/
+// │   │   ├── email.service.js
+// │   │   └── upload.service.js
+// │   │
+// │   ├── responses/
+// │   │   ├── apiResponse.js
+// │   │   └── errorResponse.js
+// │   │
+// │   └── exceptions/
+// │       └── appError.js
 // │
 // ├── storage/
 // │   ├── uploads/
-// │   └── temp/
+// │   ├── temp/
+// │   └── logs/
 // │
-// └── docs/
+// ├── jobs/
+// │   ├── email.jobs.js
+// │   └── notification.jobs.js
+// │
+// ├── docs/
+// │   ├── api.md
+// │   └── architecture.md
+// │
+// └── tests/
+//     ├── auth.test.js
+//     ├── product.test.js
+//     └── user.test.js

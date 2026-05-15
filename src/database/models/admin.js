@@ -1,8 +1,7 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
-
+import { DataTypes } from "sequelize";
+import { sequelize } from "../../config/db.js";
 const Admin = sequelize.define(
-  'Admin',
+  "Admin",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -36,9 +35,9 @@ const Admin = sequelize.define(
     },
   },
   {
-    tableName: 'admins',
+    tableName: "admins",
     timestamps: false,
   }
 );
 
-module.exports = Admin;
+export default Admin;

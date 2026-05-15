@@ -1,9 +1,6 @@
 import { registerUserService, loginUserService } from "../services/auth.service.js";
 import { registerSchema, loginSchema } from "../validations/auth.validation.js";
-import {
-  successDataResponse,
-  errorResponse,
-} from "../../../shared/responses/apiResponse.js";
+import {successDataResponse,errorResponse} from "../../../shared/responses/apiResponse.js";
 
 export const register = async (req, res) => {
   // =========================

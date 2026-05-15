@@ -1,8 +1,9 @@
 import User from "../../../database/models/User.js";
+import Admin from "../../../database/models/Admin.js";
 import { hashPassword, comparePassword } from "../../../shared/utils/hash.js";
 import { generateToken } from "../../../shared/utils/jwt.js";
 
-export const registerUserService = async (data) => {
+const registerUserService = async (data) => {
   const { first_name, last_name, email, phone, password, type } = data;
 
   const userExists = await User.findOne({ where: { email } });
@@ -36,8 +37,7 @@ export const registerUserService = async (data) => {
   };
 };
 
-
-export const loginUserService = async (data) => {
+const loginUserService = async (data) => {
   const { email, password } = data;
 
   const user = await User.findOne({ where: { email } });
@@ -66,3 +66,45 @@ export const loginUserService = async (data) => {
     token,
   };
 };
+
+const adminLoginService = async (data) => {
+  const { email, password } = data;
+
+  // =========================
+  // FIND ADMIN
+  // =========================
+  const admin = await Admin.findOne({ where: { email } });
+
+  if (!admin) {
+    throw new Error("INVALID_CREDENTIALS");
+  }
+
+  // =========================
+  // CHECK PASSWORD
+  // =========================
+  const isMatch = await comparePassword(password, admin.password);
+
+  if (!isMatch) {
+    throw new Error("INVALID_CREDENTIALS");
+  }
+
+  // =========================
+  // GENERATE TOKEN
+  // =========================
+  const token = generateToken({
+    id: admin.id,
+    email: admin.email,
+    role: "admin",
+  });
+
+  return {
+    admin: {
+      id: admin.id,
+      name: admin.name,
+      email: admin.email,
+    },
+    token,
+  };
+};
+
+export {loginUserService, registerUserService,adminLoginService,};
