@@ -1,7 +1,7 @@
 import { errorResponse } from "../responses/apiResponse.js";
 
 export const validate = (schema) => (req, res, next) => {
-  const { error } = schema.validate(req.body, {
+  const { error, value } = schema.validate(req.body, {
     abortEarly: false,
     allowUnknown: true,
   });
@@ -16,6 +16,9 @@ export const validate = (schema) => (req, res, next) => {
       errors
     );
   }
+
+  // apply Joi defaults/coercions back onto req.body
+  req.body = value;
 
   next();
 };

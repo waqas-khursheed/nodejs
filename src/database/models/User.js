@@ -1,37 +1,56 @@
-﻿import { DataTypes, Model } from "sequelize";
+import { DataTypes, Model, Sequelize } from "sequelize";
 import { sequelize } from "../../config/db.js";
 
 class User extends Model {
   static associate(models) {
-    /*
-    =========================================
-    USER RELATIONSHIPS
-    =========================================
-    */
+    // ---- hasMany ----
+    User.hasMany(models.Review, {
+      foreignKey: "user_id",
+      as: "reviews",
+      onDelete: "CASCADE",
+    });
 
-    // User -> Orders
-    // User.hasMany(models.Order, {
-    //   foreignKey: "user_id",
-    //   as: "orders",
-    // });
+    User.hasMany(models.Wishlist, {
+      foreignKey: "user_id",
+      as: "wishlists",
+      onDelete: "SET NULL",
+    });
 
-    // User -> Cart
-    // User.hasOne(models.Cart, {
-    //   foreignKey: "user_id",
-    //   as: "cart",
-    // });
+    User.hasMany(models.Cart, {
+      foreignKey: "user_id",
+      as: "carts",
+      onDelete: "SET NULL",
+    });
 
-    // User -> Reviews
-    // User.hasMany(models.Review, {
-    //   foreignKey: "user_id",
-    //   as: "reviews",
-    // });
+    User.hasMany(models.Order, {
+      foreignKey: "user_id",
+      as: "orders",
+      onDelete: "SET NULL",
+    });
 
-    // User -> Wishlist
-    // User.hasMany(models.Wishlist, {
-    //   foreignKey: "user_id",
-    //   as: "wishlists",
-    // });
+    User.hasMany(models.UsedCoupon, {
+      foreignKey: "user_id",
+      as: "usedCoupons",
+      onDelete: "SET NULL",
+    });
+
+    User.hasMany(models.ResetPasswordCode, {
+      foreignKey: "user_id",
+      as: "resetPasswordCodes",
+      onDelete: "CASCADE",
+    });
+
+    User.hasMany(models.UserReward, {
+      foreignKey: "user_id",
+      as: "userRewards",
+      onDelete: "CASCADE",
+    });
+
+    User.hasMany(models.UserAddress, {
+      foreignKey: "user_id",
+      as: "userAddresses",
+      onDelete: "CASCADE",
+    });
   }
 }
 

@@ -1,13 +1,20 @@
-
-import { DataTypes, Model } from "sequelize";
+import { DataTypes, Model, Sequelize } from "sequelize";
 import { sequelize } from "../../config/db.js";
 
-class ResetPasswordCode extends Model {}
+class ResetPasswordCode extends Model {
+  static associate(models) {
+    // ---- belongsTo ----
+    ResetPasswordCode.belongsTo(models.User, {
+      foreignKey: "user_id",
+      as: "user",
+    });
+  }
+}
 
 ResetPasswordCode.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
@@ -23,15 +30,14 @@ ResetPasswordCode.init(
     },
 
     is_active: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
     },
   },
   {
     sequelize,
 
     modelName: "ResetPasswordCode",
-
     tableName: "reset_password_codes",
 
     timestamps: false,

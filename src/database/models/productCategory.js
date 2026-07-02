@@ -1,8 +1,24 @@
-import { DataTypes } from "sequelize";
+import { DataTypes, Model, Sequelize } from "sequelize";
 import { sequelize } from "../../config/db.js";
 
-const ProductCategory = sequelize.define(
-  "ProductCategory",
+class ProductCategory extends Model {
+  static associate(models) {
+    // ---- hasMany ----
+    ProductCategory.hasMany(models.AssignCatToProduct, {
+      foreignKey: "category_id",
+      as: "assignCatToProducts",
+      onDelete: "CASCADE",
+    });
+
+    ProductCategory.hasMany(models.MetaCouponCategory, {
+      foreignKey: "cat_id",
+      as: "metaCouponCategories",
+      onDelete: "CASCADE",
+    });
+  }
+}
+
+ProductCategory.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -61,8 +77,8 @@ const ProductCategory = sequelize.define(
     },
 
     is_size_chart: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
+      type: DataTypes.TINYINT,
+      defaultValue: 0,
     },
 
     parent_id: {
@@ -79,10 +95,27 @@ const ProductCategory = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+
+    created_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+
+    updated_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
+    sequelize,
+
+    modelName: "ProductCategory",
     tableName: "product_categories",
-    timestamps: false,
+
+    timestamps: true,
+
+    createdAt: "created_at",
+    updatedAt: "updated_at",
   }
 );
 

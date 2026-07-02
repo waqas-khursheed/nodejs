@@ -57,7 +57,7 @@ export const adminAuthMiddleware = async (req, res, next) => {
     // =====================================
     // CHECK ADMIN ACTIVE (optional)
     // =====================================
-    if (admin.is_active === 0) {
+    if (!admin.is_active) {
       return errorResponse(
         res,
         "Unauthorized",

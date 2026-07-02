@@ -40,13 +40,32 @@ export const errorHandler = (err, req, res, next) => {
   }
 
   // =====================================
+  // Multer (file upload) Errors
+  // =====================================
+  if (err.name === "MulterError") {
+    const multerMessages = {
+      LIMIT_FILE_SIZE: "File is too large. Maximum allowed size is 5MB.",
+      LIMIT_FILE_COUNT: "Too many files uploaded.",
+      LIMIT_UNEXPECTED_FILE: "Unexpected file field.",
+    };
+
+    error = new AppError(
+      multerMessages[err.code] || "File upload error",
+      400
+    );
+  }
+
+  // =====================================
   // Default Error Response
   // =====================================
+  const message = error.isOperational
+    ? error.message
+    : process.env.NODE_ENV === "development"
+    ? error.message
+    : "Something went wrong";
+
   res.status(error.statusCode || 500).json({
     status: false,
-    message:
-      process.env.NODE_ENV === "development"
-        ? error.message
-        : "Something went wrong",
+    message,
   });
 };

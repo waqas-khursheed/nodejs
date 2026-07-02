@@ -1,8 +1,12 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+import { DataTypes, Model, Sequelize } from "sequelize";
+import { sequelize } from "../../config/db.js";
 
-const PasswordReset = sequelize.define(
-  'PasswordReset',
+class PasswordReset extends Model {
+  static associate(models) {}
+
+}
+
+PasswordReset.init(
   {
     email: {
       type: DataTypes.STRING(191),
@@ -20,9 +24,15 @@ const PasswordReset = sequelize.define(
     },
   },
   {
-    tableName: 'password_resets',
+    sequelize,
+
+    modelName: "PasswordReset",
+    tableName: "password_resets",
+
     timestamps: false,
   }
 );
 
-module.exports = PasswordReset;
+PasswordReset.removeAttribute("id");
+
+export default PasswordReset;
