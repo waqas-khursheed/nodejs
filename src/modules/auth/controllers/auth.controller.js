@@ -1,150 +1,96 @@
-import { registerUserService, loginUserService } from "../services/auth.service.js";
-import { registerSchema, loginSchema } from "../validations/auth.validation.js";
-import {successDataResponse,errorResponse} from "../../../shared/responses/apiResponse.js";
+import {
+  registerUserService,
+  loginUserService,
+  requestPasswordResetService,
+  resetPasswordService,
+  changePasswordService,
+  getProfileService,
+  updateProfileService,
+} from "../services/auth.service.js";
+import { mergeDeviceCartIntoUserService } from "../../carts/services/cart.service.js";
+import { successResponse, successDataResponse, errorResponse } from "../../../shared/responses/apiResponse.js";
+
+const errorMap = {
+  EMAIL_EXISTS: { code: 409, msg: "Email already exists" },
+  INVALID_CREDENTIALS: { code: 401, msg: "Invalid email or password" },
+  ACCOUNT_INACTIVE: { code: 401, msg: "Account is inactive" },
+  USER_NOT_FOUND: { code: 404, msg: "No account found with this email" },
+  INVALID_CODE: { code: 422, msg: "Invalid or expired reset code" },
+  INVALID_OLD_PASSWORD: { code: 422, msg: "Old password is incorrect" },
+};
+
+const handleServiceError = (res, err) => {
+  const mapped = errorMap[err.message];
+  if (mapped) return errorResponse(res, mapped.msg, mapped.code);
+
+  return errorResponse(
+    res,
+    process.env.NODE_ENV === "development" ? err.message : "Internal Server Error",
+    500
+  );
+};
 
 export const register = async (req, res) => {
-  // =========================
-  // DEBUG
-  // =========================
-  console.log("BODY:", req.body);
-
-  // =========================
-  // VALIDATION LAYER (ALL ERRORS)
-  // =========================
-  const { error } = registerSchema.validate(req.body, {
-    abortEarly: false,
-  });
-
-  if (error) {
-    const errors = error.details.map((err) => err.message);
-
-    return errorResponse(res, "Validation Failed", 422, errors);
-  }
-
   try {
-    // =========================
-    // SERVICE LAYER
-    // =========================
     const result = await registerUserService(req.body);
-
-    return successDataResponse(
-      res,
-      "User registered successfully",
-      result,
-      201
-    );
-  } catch (err) {
-
-    // =========================
-    // ERROR MAPPING LAYER
-    // =========================
-    const errorMap = {
-      EMAIL_EXISTS: {
-        field: "email",
-        msg: "Email already exists",
-        code: 409,
-      },
-      INVALID_CREDENTIALS: {
-        field: "email",
-        msg: "Invalid credentials",
-        code: 401,
-      },
-    };  
-
-    const mappedError = errorMap[err.message];
-
-    if (mappedError) {
-      const errors = {
-        [mappedError.field]: mappedError.msg,
-      };
-
-      return errorResponse(
-        res,
-        "Validation Failed",
-        mappedError.code,
-        errors
-      );
-    }
-    // =========================
-    // DEFAULT ERROR
-    // =========================
-    return errorResponse(
-      res,
-      process.env.NODE_ENV === "development"
-        ? err.message
-        : "Internal Server Error",
-      500,
-      null
-    );
+    await mergeDeviceCartIntoUserService(req.headers["x-device-id"], result.user.id);
+    return successDataResponse(res, "User registered successfully", result, 201);
+  } catch (error) {
+    return handleServiceError(res, error);
   }
 };
 
-
 export const login = async (req, res) => {
   try {
-    // =========================
-    // VALIDATION
-    // =========================
-    const { error } = loginSchema.validate(req.body, {
-      abortEarly: false,
-    });
-
-    if (error) {
-      const errors = error.details.map((err) => err.message);
-
-      return errorResponse(res, "Validation Failed", 422, errors);
-    }
-
-    // =========================
-    // SERVICE LAYER
-    // =========================
     const result = await loginUserService(req.body);
+    await mergeDeviceCartIntoUserService(req.headers["x-device-id"], result.user.id);
+    return successDataResponse(res, "Login successful", result, 200);
+  } catch (error) {
+    return handleServiceError(res, error);
+  }
+};
 
-    return successDataResponse(
-      res,
-      "Login successful",
-      result,
-      200
-    );
+export const forgotPassword = async (req, res) => {
+  try {
+    const result = await requestPasswordResetService(req.body.email);
+    return successDataResponse(res, result.message, result, 200);
+  } catch (error) {
+    return handleServiceError(res, error);
+  }
+};
 
-  } catch (err) {
+export const resetPassword = async (req, res) => {
+  try {
+    await resetPasswordService(req.body);
+    return successResponse(res, "Password reset successfully", 200);
+  } catch (error) {
+    return handleServiceError(res, error);
+  }
+};
 
-    // =========================
-    // ERROR MAPPING
-    // =========================
-    const errorMap = {
-      INVALID_CREDENTIALS: {
-        field: "email",
-        msg: "Invalid email or password",
-        code: 401,
-      },
-    };
+export const changePassword = async (req, res) => {
+  try {
+    await changePasswordService(req.user.id, req.body);
+    return successResponse(res, "Password changed successfully", 200);
+  } catch (error) {
+    return handleServiceError(res, error);
+  }
+};
 
-    const mapped = errorMap[err.message];
+export const getProfile = async (req, res) => {
+  try {
+    const result = await getProfileService(req.user.id);
+    return successDataResponse(res, "Profile fetched successfully", result, 200);
+  } catch (error) {
+    return handleServiceError(res, error);
+  }
+};
 
-    if (mapped) {
-      const errors = {
-        [mapped.field]: mapped.msg,
-      };
-
-      return errorResponse(
-        res,
-        "Validation Failed",
-        mapped.code,
-        errors
-      );
-    }
-
-    // =========================
-    // DEFAULT ERROR
-    // =========================
-    return errorResponse(
-      res,
-      process.env.NODE_ENV === "development"
-        ? err.message
-        : "Internal Server Error",
-      500,
-      null
-    );
+export const updateProfile = async (req, res) => {
+  try {
+    const result = await updateProfileService(req.user.id, req.body);
+    return successDataResponse(res, "Profile updated successfully", result, 200);
+  } catch (error) {
+    return handleServiceError(res, error);
   }
 };
