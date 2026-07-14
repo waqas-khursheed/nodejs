@@ -16,8 +16,8 @@ export const findUsedCouponRepo = async (userId, couponId) => {
   return await UsedCoupon.findOne({ where: { user_id: userId, coupon_id: couponId } });
 };
 
-export const createUsedCouponRepo = async (userId, couponId) => {
-  return await UsedCoupon.create({ user_id: userId, coupon_id: couponId });
+export const createUsedCouponRepo = async (userId, couponId, options = {}) => {
+  return await UsedCoupon.create({ user_id: userId, coupon_id: couponId }, options);
 };
 
 export const findProductCategoryIdsRepo = async (productIds) => {

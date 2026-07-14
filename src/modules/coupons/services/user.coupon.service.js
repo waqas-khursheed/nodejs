@@ -1,9 +1,8 @@
 import {
   findActiveCouponByCodeRepo,
-  findCouponCategoryIdsRepo,
   findUsedCouponRepo,
-  findProductCategoryIdsRepo,
 } from "../repositories/user.coupon.repository.js";
+import { resolveEligibleSubtotal, assertCouponIsUsable } from "./couponEligibility.service.js";
 import { getCartService } from "../../carts/services/cart.service.js";
 
 export const previewCouponService = async (userId, code) => {
@@ -16,25 +15,8 @@ export const previewCouponService = async (userId, code) => {
   const alreadyUsed = await findUsedCouponRepo(userId, coupon.id);
   if (alreadyUsed) throw new Error("COUPON_ALREADY_USED");
 
-  let eligibleSubtotal = 0;
-
-  if (coupon.to_all) {
-    eligibleSubtotal = cart.subTotal;
-  } else {
-    const categoryIds = await findCouponCategoryIdsRepo(coupon.id);
-    const productIds = cart.items.map((item) => item.product_id);
-    const assignments = await findProductCategoryIdsRepo(productIds);
-
-    const eligibleProductIds = new Set(
-      assignments.filter((a) => categoryIds.includes(a.category_id)).map((a) => a.product_id)
-    );
-
-    eligibleSubtotal = cart.items
-      .filter((item) => eligibleProductIds.has(item.product_id))
-      .reduce((sum, item) => sum + item.lineTotal, 0);
-
-    if (eligibleSubtotal === 0) throw new Error("COUPON_NOT_APPLICABLE");
-  }
+  const eligibleSubtotal = await resolveEligibleSubtotal(coupon, cart);
+  assertCouponIsUsable(coupon, eligibleSubtotal);
 
   const discountAmount = Number(((eligibleSubtotal * coupon.percentage) / 100).toFixed(2));
 

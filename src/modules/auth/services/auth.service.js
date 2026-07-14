@@ -3,6 +3,7 @@ import Admin from "../../../database/models/Admin.js";
 import ResetPasswordCode from "../../../database/models/ResetPasswordCode.js";
 import { hashPassword, comparePassword } from "../../../shared/utils/hash.js";
 import { generateToken } from "../../../shared/utils/jwt.js";
+import { sendMail } from "../../../shared/utils/mailer.js";
 
 const publicUser = (user) => ({
   id: user.id,
@@ -72,9 +73,12 @@ const loginUserService = async (data) => {
 
 const generateOtpCode = () => String(Math.floor(100000 + Math.random() * 900000));
 
-// No mail service is wired up yet, so the code is returned directly in
-// non-production environments for manual testing; in production it would be
-// emailed/SMS'd to the user instead of appearing in the response.
+// Sends the OTP by email via shared/utils/mailer.js. When no SMTP provider
+// is configured (the default in a fresh .env), the mailer logs the email
+// to the console instead of sending it — so `debug_code` is also included
+// outside production purely so the flow is testable without setting up
+// SMTP first. Once SMTP_HOST etc. are set, mail actually goes out; remove
+// debug_code once that's confirmed to be working end-to-end.
 const requestPasswordResetService = async (email) => {
   const user = await User.findOne({ where: { email } });
   if (!user) {
@@ -86,8 +90,14 @@ const requestPasswordResetService = async (email) => {
   const code = generateOtpCode();
   await ResetPasswordCode.create({ user_id: user.id, code, is_active: 1 });
 
+  await sendMail({
+    to: user.email,
+    subject: "Your password reset code",
+    html: `<p>Your password reset code is <strong>${code}</strong>. It will expire shortly — if you didn't request this, you can ignore this email.</p>`,
+  });
+
   return {
-    message: "A reset code has been generated for this account",
+    message: "A reset code has been sent to your email",
     ...(process.env.NODE_ENV !== "production" ? { debug_code: code } : {}),
   };
 };

@@ -5,12 +5,14 @@ import {
   updateCouponService,
   toggleCouponStatusService,
   deleteCouponService,
+  getCouponUsagesService,
 } from "../services/coupon.service.js";
 import {
   successResponse,
   successDataResponse,
-  errorResponse,
-} from "../../../shared/responses/apiResponse.js";
+  } from "../../../shared/responses/apiResponse.js";
+
+import { createErrorHandler } from "../../../shared/utils/controllerErrorHandler.js";
 
 const errorMap = {
   COUPON_ALREADY_EXISTS: { code: 409, msg: "A coupon with this code already exists" },
@@ -18,19 +20,7 @@ const errorMap = {
   CATEGORY_NOT_FOUND: { code: 422, msg: "One or more selected categories do not exist" },
 };
 
-const handleServiceError = (res, err) => {
-  const mapped = errorMap[err.message];
-
-  if (mapped) {
-    return errorResponse(res, mapped.msg, mapped.code);
-  }
-
-  return errorResponse(
-    res,
-    process.env.NODE_ENV === "development" ? err.message : "Internal Server Error",
-    500
-  );
-};
+const handleServiceError = createErrorHandler(errorMap);
 
 export const createCoupon = async (req, res) => {
   try {
@@ -87,6 +77,16 @@ export const deleteCoupon = async (req, res) => {
     await deleteCouponService(req.params.id);
 
     return successResponse(res, "Coupon deleted successfully", 200);
+  } catch (error) {
+    return handleServiceError(res, error);
+  }
+};
+
+export const getCouponUsages = async (req, res) => {
+  try {
+    const result = await getCouponUsagesService(req.params.id, req.query);
+
+    return successDataResponse(res, "Coupon usages fetched successfully", result, 200);
   } catch (error) {
     return handleServiceError(res, error);
   }

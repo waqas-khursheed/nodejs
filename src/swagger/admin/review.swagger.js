@@ -13,6 +13,7 @@
  *         review: { type: string, example: "Great quality, fits perfectly." }
  *         rate: { type: integer, example: 5 }
  *         status: { type: integer, enum: [0, 1, 2], example: 0 }
+ *         is_verified_purchase: { type: integer, enum: [0, 1], example: 1, description: "1 if the reviewer has a paid order containing this product" }
  *         created_at: { type: string, format: date-time }
  *         product:
  *           type: object

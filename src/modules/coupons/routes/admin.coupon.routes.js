@@ -6,6 +6,7 @@ import {
   updateCoupon,
   toggleCouponStatus,
   deleteCoupon,
+  getCouponUsages,
 } from "../controllers/admin.coupon.controller.js";
 import { adminAuthMiddleware } from "../../../shared/middleware/admin.middleware.js";
 import { validate } from "../../../shared/middleware/validate.middleware.js";
@@ -15,6 +16,7 @@ import {
   updateCouponSchema,
   couponIdParamSchema,
   couponListQuerySchema,
+  couponUsagesQuerySchema,
 } from "../validations/coupon.validation.js";
 
 const router = express.Router();
@@ -24,6 +26,14 @@ router.post("/create", adminAuthMiddleware, validate(couponSchema), createCoupon
 router.get("/", adminAuthMiddleware, validateQuery(couponListQuerySchema), listCoupons);
 
 router.get("/:id", adminAuthMiddleware, validateParams(couponIdParamSchema), getCoupon);
+
+router.get(
+  "/:id/usages",
+  adminAuthMiddleware,
+  validateParams(couponIdParamSchema),
+  validateQuery(couponUsagesQuerySchema),
+  getCouponUsages
+);
 
 router.put(
   "/:id",

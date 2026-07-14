@@ -15,8 +15,8 @@ const detailIncludes = [
   },
 ];
 
-export const createProductRepo = async (data) => {
-  return await Product.create(data);
+export const createProductRepo = async (data, options = {}) => {
+  return await Product.create(data, options);
 };
 
 export const findProductByTitleRepo = async (title, excludeId = null) => {
@@ -51,13 +51,19 @@ export const updateProductRepo = async (id, data) => {
   return await findProductByIdRepo(id, true);
 };
 
+// Write-only variant (no self re-read) for use inside a transaction — see
+// the equivalent note in coupon.repository.js.
+export const updateProductFieldsRepo = async (id, data, options = {}) => {
+  await Product.update(data, { where: { id }, ...options });
+};
+
 export const deleteProductRepo = async (id) => {
   return await Product.destroy({ where: { id } });
 };
 
 // ---- Category assignment ----
-export const syncProductCategoriesRepo = async (productId, categoryIds) => {
-  await AssignCatToProduct.destroy({ where: { product_id: productId } });
+export const syncProductCategoriesRepo = async (productId, categoryIds, options = {}) => {
+  await AssignCatToProduct.destroy({ where: { product_id: productId }, ...options });
 
   if (categoryIds && categoryIds.length > 0) {
     const rows = categoryIds.map((category_id) => ({
@@ -65,7 +71,7 @@ export const syncProductCategoriesRepo = async (productId, categoryIds) => {
       category_id,
     }));
 
-    await AssignCatToProduct.bulkCreate(rows);
+    await AssignCatToProduct.bulkCreate(rows, options);
   }
 };
 
@@ -74,10 +80,10 @@ export const findCategoriesByIdsRepo = async (categoryIds) => {
 };
 
 // ---- Gallery ----
-export const addProductGalleryImagesRepo = async (productId, filenames) => {
+export const addProductGalleryImagesRepo = async (productId, filenames, options = {}) => {
   const rows = filenames.map((image) => ({ product_id: productId, image }));
 
-  return await ProductGallery.bulkCreate(rows);
+  return await ProductGallery.bulkCreate(rows, options);
 };
 
 export const findGalleryImageByIdRepo = async (galleryId) => {

@@ -8,16 +8,16 @@ const detailIncludes = [
   { model: BillingDetail, as: "billingDetails" },
 ];
 
-export const createOrderRepo = async (data) => {
-  return await Order.create(data);
+export const createOrderRepo = async (data, options = {}) => {
+  return await Order.create(data, options);
 };
 
-export const createOrderDetailsRepo = async (rows) => {
-  return await OrderDetail.bulkCreate(rows);
+export const createOrderDetailsRepo = async (rows, options = {}) => {
+  return await OrderDetail.bulkCreate(rows, options);
 };
 
-export const createBillingDetailRepo = async (data) => {
-  return await BillingDetail.create(data);
+export const createBillingDetailRepo = async (data, options = {}) => {
+  return await BillingDetail.create(data, options);
 };
 
 export const findUserOrderByIdRepo = async (userId, orderId) => {

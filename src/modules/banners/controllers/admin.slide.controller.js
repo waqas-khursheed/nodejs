@@ -9,27 +9,16 @@ import {
 import {
   successResponse,
   successDataResponse,
-  errorResponse,
-} from "../../../shared/responses/apiResponse.js";
+  } from "../../../shared/responses/apiResponse.js";
+
+import { createErrorHandler } from "../../../shared/utils/controllerErrorHandler.js";
 
 const errorMap = {
   SLIDE_NOT_FOUND: { code: 404, msg: "Slide not found" },
   IMAGE_REQUIRED: { code: 422, msg: "Image is required" },
 };
 
-const handleServiceError = (res, err) => {
-  const mapped = errorMap[err.message];
-
-  if (mapped) {
-    return errorResponse(res, mapped.msg, mapped.code);
-  }
-
-  return errorResponse(
-    res,
-    process.env.NODE_ENV === "development" ? err.message : "Internal Server Error",
-    500
-  );
-};
+const handleServiceError = createErrorHandler(errorMap);
 
 export const createSlide = async (req, res) => {
   try {

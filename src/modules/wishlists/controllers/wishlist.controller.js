@@ -3,7 +3,10 @@ import {
   removeFromWishlistService,
   getWishlistService,
 } from "../services/wishlist.service.js";
-import { successResponse, successDataResponse, errorResponse } from "../../../shared/responses/apiResponse.js";
+import { successResponse, successDataResponse
+} from "../../../shared/responses/apiResponse.js";
+
+import { createErrorHandler } from "../../../shared/utils/controllerErrorHandler.js";
 
 const errorMap = {
   PRODUCT_NOT_FOUND: { code: 404, msg: "Product not found" },
@@ -11,16 +14,7 @@ const errorMap = {
   NOT_IN_WISHLIST: { code: 404, msg: "Product is not in your wishlist" },
 };
 
-const handleServiceError = (res, err) => {
-  const mapped = errorMap[err.message];
-  if (mapped) return errorResponse(res, mapped.msg, mapped.code);
-
-  return errorResponse(
-    res,
-    process.env.NODE_ENV === "development" ? err.message : "Internal Server Error",
-    500
-  );
-};
+const handleServiceError = createErrorHandler(errorMap);
 
 export const addToWishlist = async (req, res) => {
   try {

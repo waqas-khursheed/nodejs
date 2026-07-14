@@ -89,23 +89,27 @@ export const removeCartItemService = async (owner, cartId) => {
 export const getCartService = async (owner) => {
   const items = await findCartByOwnerRepo(owner);
 
-  let subTotal = 0;
-  const cart = [];
+  const stockIds = items.map((item) => item.stock_id).filter(Boolean);
+  const stocks = stockIds.length
+    ? await Stock.findAll({ where: { id: stockIds } })
+    : [];
+  const stockById = new Map(stocks.map((stock) => [stock.id, stock]));
 
-  for (const item of items) {
-    const stock = item.stock_id ? await Stock.findByPk(item.stock_id) : null;
+  let subTotal = 0;
+  const cart = items.map((item) => {
+    const stock = item.stock_id ? stockById.get(item.stock_id) ?? null : null;
     const unitPrice = computeUnitPrice(item.product, stock);
     const lineTotal = Number((unitPrice * item.quantity).toFixed(2));
     subTotal += lineTotal;
 
-    cart.push({ ...item.toJSON(), unitPrice, lineTotal });
-  }
+    return { ...item.toJSON(), unitPrice, lineTotal };
+  });
 
   return { items: cart, subTotal: Number(subTotal.toFixed(2)) };
 };
 
-export const clearCartService = async (owner) => {
-  await clearCartRepo(owner);
+export const clearCartService = async (owner, options = {}) => {
+  await clearCartRepo(owner, options);
   return true;
 };
 

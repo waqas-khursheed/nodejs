@@ -1,10 +1,12 @@
 import { Op } from "sequelize";
+import { sequelize } from "../../../config/db.js";
 import {
   createProductRepo,
   findProductByTitleRepo,
   findProductByIdRepo,
   findAllProductsRepo,
   updateProductRepo,
+  updateProductFieldsRepo,
   deleteProductRepo,
   syncProductCategoriesRepo,
   findCategoriesByIdsRepo,
@@ -14,7 +16,7 @@ import {
 } from "../repositories/product.repository.js";
 import { findBrandByIdRepo } from "../../brands/repositories/brand.repository.js";
 import { slugify } from "../../../shared/helpers/helpers.js";
-import { deleteUploadedFile } from "../../../shared/utils/fileUtils.js";
+import { deleteUploadedFile, scheduleImageReplacement } from "../../../shared/utils/fileUtils.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
 
 const validateCategoryIds = async (categoryIds) => {
@@ -56,24 +58,31 @@ export const createProductService = async (data) => {
 
   await validateCategoryIds(category_ids);
 
-  const product = await createProductRepo({
-    ...rest,
-    title,
-    slug: slugify(title),
-    brand_id: brand_id || null,
-    featured_image,
-    hovered_image: hovered_image || null,
+  const productId = await sequelize.transaction(async (transaction) => {
+    const product = await createProductRepo(
+      {
+        ...rest,
+        title,
+        slug: slugify(title),
+        brand_id: brand_id || null,
+        featured_image,
+        hovered_image: hovered_image || null,
+      },
+      { transaction }
+    );
+
+    if (category_ids && category_ids.length > 0) {
+      await syncProductCategoriesRepo(product.id, category_ids, { transaction });
+    }
+
+    if (gallery && gallery.length > 0) {
+      await addProductGalleryImagesRepo(product.id, gallery, { transaction });
+    }
+
+    return product.id;
   });
 
-  if (category_ids && category_ids.length > 0) {
-    await syncProductCategoriesRepo(product.id, category_ids);
-  }
-
-  if (gallery && gallery.length > 0) {
-    await addProductGalleryImagesRepo(product.id, gallery);
-  }
-
-  return await findProductByIdRepo(product.id, true);
+  return await findProductByIdRepo(productId, true);
 };
 
 export const getProductsService = async (query) => {
@@ -153,22 +162,24 @@ export const updateProductService = async (id, data) => {
 
   if (featured_image) {
     updateData.featured_image = featured_image;
-    if (product.featured_image) deleteUploadedFile("products", product.featured_image);
+    scheduleImageReplacement("products", product.featured_image, featured_image);
   }
   if (hovered_image) {
     updateData.hovered_image = hovered_image;
-    if (product.hovered_image) deleteUploadedFile("products", product.hovered_image);
+    scheduleImageReplacement("products", product.hovered_image, hovered_image);
   }
 
-  await updateProductRepo(id, updateData);
+  await sequelize.transaction(async (transaction) => {
+    await updateProductFieldsRepo(id, updateData, { transaction });
 
-  if (category_ids !== undefined) {
-    await syncProductCategoriesRepo(id, category_ids);
-  }
+    if (category_ids !== undefined) {
+      await syncProductCategoriesRepo(id, category_ids, { transaction });
+    }
 
-  if (gallery && gallery.length > 0) {
-    await addProductGalleryImagesRepo(id, gallery);
-  }
+    if (gallery && gallery.length > 0) {
+      await addProductGalleryImagesRepo(id, gallery, { transaction });
+    }
+  });
 
   return await findProductByIdRepo(id, true);
 };

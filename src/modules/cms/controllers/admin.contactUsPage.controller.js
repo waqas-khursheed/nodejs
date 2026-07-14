@@ -2,23 +2,17 @@ import {
   getContactUsPageService,
   upsertContactUsPageService,
 } from "../services/contactUsPage.service.js";
-import { successDataResponse, errorResponse } from "../../../shared/responses/apiResponse.js";
+import { successDataResponse
+} from "../../../shared/responses/apiResponse.js";
+
+import { createErrorHandler } from "../../../shared/utils/controllerErrorHandler.js";
 
 const errorMap = {
   NOT_CONFIGURED: { code: 404, msg: "Contact us page has not been configured yet" },
   TITLE_CONTENT_REQUIRED: { code: 422, msg: "title and content are required to create the contact us page" },
 };
 
-const handleServiceError = (res, err) => {
-  const mapped = errorMap[err.message];
-  if (mapped) return errorResponse(res, mapped.msg, mapped.code);
-
-  return errorResponse(
-    res,
-    process.env.NODE_ENV === "development" ? err.message : "Internal Server Error",
-    500
-  );
-};
+const handleServiceError = createErrorHandler(errorMap);
 
 export const getContactUsPage = async (req, res) => {
   try {

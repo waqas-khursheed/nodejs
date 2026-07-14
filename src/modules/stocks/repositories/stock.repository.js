@@ -1,12 +1,20 @@
 import Stock from "../../../database/models/Stock.js";
 import Product from "../../../database/models/Product.js";
+import AttributeItem from "../../../database/models/AttributeItem.js";
+
+const detailIncludes = [
+  { model: Product, as: "product" },
+  { model: AttributeItem, as: "color" },
+  { model: AttributeItem, as: "size" },
+  { model: AttributeItem, as: "fitting" },
+];
 
 export const createStockRepo = async (data) => {
   return await Stock.create(data);
 };
 
 export const findStockByIdRepo = async (id) => {
-  return await Stock.findByPk(id, { include: [{ model: Product, as: "product" }] });
+  return await Stock.findByPk(id, { include: detailIncludes });
 };
 
 export const findAllStocksRepo = async ({ where, limit, offset }) => {
@@ -14,7 +22,8 @@ export const findAllStocksRepo = async ({ where, limit, offset }) => {
     where,
     limit,
     offset,
-    include: [{ model: Product, as: "product" }],
+    distinct: true,
+    include: detailIncludes,
     order: [["id", "DESC"]],
   });
 };

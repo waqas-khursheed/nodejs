@@ -7,7 +7,7 @@ import {
   updateAttributeItemRepo,
   deleteAttributeItemRepo,
 } from "../repositories/attributeItem.repository.js";
-import { deleteUploadedFile } from "../../../shared/utils/fileUtils.js";
+import { deleteUploadedFile, scheduleImageReplacement } from "../../../shared/utils/fileUtils.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
 
 export const createAttributeItemService = async (data) => {
@@ -91,7 +91,7 @@ export const updateAttributeItemService = async (id, data) => {
 
   if (image) {
     updateData.image = image;
-    if (item.image) deleteUploadedFile("attributes", item.image);
+    scheduleImageReplacement("attributes", item.image, image);
   }
 
   return await updateAttributeItemRepo(id, updateData);

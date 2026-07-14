@@ -1,4 +1,4 @@
-import { DataTypes, Model, Sequelize } from "sequelize";
+import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../../config/db.js";
 
 class Order extends Model {
@@ -19,6 +19,12 @@ class Order extends Model {
     Order.hasMany(models.BillingDetail, {
       foreignKey: "order_id",
       as: "billingDetails",
+      onDelete: "CASCADE",
+    });
+
+    Order.hasMany(models.OrderStatusHistory, {
+      foreignKey: "order_id",
+      as: "statusHistory",
       onDelete: "CASCADE",
     });
 
@@ -51,12 +57,6 @@ Order.init(
     user_ip: {
       type: DataTypes.STRING,
       allowNull: false,
-    },
-
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
     },
 
     status: {
@@ -160,7 +160,12 @@ Order.init(
     modelName: "Order",
     tableName: "orders",
 
-    timestamps: false,
+    timestamps: true,
+    createdAt: "created_at",
+    updatedAt: "updated_at",
+
+    paranoid: true,
+    deletedAt: "deleted_at",
   }
 );
 

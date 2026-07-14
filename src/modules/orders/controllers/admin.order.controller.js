@@ -9,26 +9,15 @@ import {
 import {
   successResponse,
   successDataResponse,
-  errorResponse,
-} from "../../../shared/responses/apiResponse.js";
+  } from "../../../shared/responses/apiResponse.js";
+
+import { createErrorHandler } from "../../../shared/utils/controllerErrorHandler.js";
 
 const errorMap = {
   ORDER_NOT_FOUND: { code: 404, msg: "Order not found" },
 };
 
-const handleServiceError = (res, err) => {
-  const mapped = errorMap[err.message];
-
-  if (mapped) {
-    return errorResponse(res, mapped.msg, mapped.code);
-  }
-
-  return errorResponse(
-    res,
-    process.env.NODE_ENV === "development" ? err.message : "Internal Server Error",
-    500
-  );
-};
+const handleServiceError = createErrorHandler(errorMap);
 
 export const listOrders = async (req, res) => {
   try {
@@ -52,7 +41,7 @@ export const getOrder = async (req, res) => {
 
 export const updateOrderStatus = async (req, res) => {
   try {
-    const result = await updateOrderStatusService(req.params.id, req.body.status);
+    const result = await updateOrderStatusService(req.params.id, req.body.status, req.admin.id);
 
     return successDataResponse(res, "Order status updated successfully", result, 200);
   } catch (error) {
@@ -62,7 +51,7 @@ export const updateOrderStatus = async (req, res) => {
 
 export const updateOrderPaymentStatus = async (req, res) => {
   try {
-    const result = await updatePaymentStatusService(req.params.id, req.body.payment_status);
+    const result = await updatePaymentStatusService(req.params.id, req.body.payment_status, req.admin.id);
 
     return successDataResponse(res, "Order payment status updated successfully", result, 200);
   } catch (error) {

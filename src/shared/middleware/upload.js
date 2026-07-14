@@ -2,6 +2,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { AppError } from "../errors/AppError.js";
+import { resizeUploadedImages } from "./imageResize.js";
 
 const storageRoot = path.join(process.cwd(), "src", "storage", "uploads");
 
@@ -52,11 +53,23 @@ const fileFilter = (req, file, cb) => {
   cb(null, true);
 };
 
-export const upload = multer({
+const multerUpload = multer({
   storage,
   fileFilter,
   limits: {
     fileSize: MAX_FILE_SIZE,
-    files: 10,
+    // No global `files` cap here — each route's own `.fields([{ name, maxCount }])`
+    // already bounds every field independently. A shared cross-field cap (e.g. 10)
+    // previously rejected the entire request once combined field counts exceeded
+    // it (e.g. products: 1 featured + 1 hovered + 10 gallery = 12 > 10), even
+    // though every individual field was within its own declared maxCount.
   },
 });
+
+// Wraps multer's `.single`/`.fields` so every route that accepts an upload
+// automatically gets image resizing too, instead of every route file
+// having to remember to add a second middleware after multer's.
+export const upload = {
+  single: (fieldName) => [multerUpload.single(fieldName), resizeUploadedImages],
+  fields: (fields) => [multerUpload.fields(fields), resizeUploadedImages],
+};

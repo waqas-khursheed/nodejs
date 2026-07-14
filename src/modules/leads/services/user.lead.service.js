@@ -1,5 +1,6 @@
 import Subscribe from "../../../database/models/Subscribe.js";
 import QueryForm from "../../../database/models/QueryForm.js";
+import { notifyAdmins } from "../../../shared/services/notifier.service.js";
 
 export const subscribeService = async (email) => {
   const existing = await Subscribe.findOne({ where: { email } });
@@ -16,5 +17,14 @@ export const subscribeService = async (email) => {
 };
 
 export const submitContactFormService = async (data) => {
-  return await QueryForm.create(data);
+  const created = await QueryForm.create(data);
+
+  notifyAdmins({
+    title: "New contact form message",
+    description: `${data.name} (${data.email}) sent a message`,
+    tableName: "query_forms",
+    rowId: created.id,
+  }).catch(() => {});
+
+  return created;
 };

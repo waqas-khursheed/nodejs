@@ -7,6 +7,7 @@ import {
 } from "../repositories/user.product.repository.js";
 import Review from "../../../database/models/Review.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
+import { buildProductSearchCondition } from "../../../shared/utils/fullTextSearch.js";
 
 const SORT_MAP = {
   newest: [["created_at", "DESC"]],
@@ -20,7 +21,10 @@ export const getProductsService = async (query) => {
   const where = { status: 1 };
 
   if (query.search) {
-    where.title = { [Op.like]: `%${query.search}%` };
+    const searchCondition = buildProductSearchCondition(query.search);
+    // Very short/stopword-only queries can produce no usable boolean-mode
+    // terms — fall back to LIKE for those rather than matching everything.
+    where[Op.and] = [...(where[Op.and] ?? []), searchCondition ?? { title: { [Op.like]: `%${query.search}%` } }];
   }
 
   if (query.min_price || query.max_price) {

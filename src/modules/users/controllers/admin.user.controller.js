@@ -7,26 +7,15 @@ import {
 import {
   successResponse,
   successDataResponse,
-  errorResponse,
-} from "../../../shared/responses/apiResponse.js";
+  } from "../../../shared/responses/apiResponse.js";
+
+import { createErrorHandler } from "../../../shared/utils/controllerErrorHandler.js";
 
 const errorMap = {
   USER_NOT_FOUND: { code: 404, msg: "User not found" },
 };
 
-const handleServiceError = (res, err) => {
-  const mapped = errorMap[err.message];
-
-  if (mapped) {
-    return errorResponse(res, mapped.msg, mapped.code);
-  }
-
-  return errorResponse(
-    res,
-    process.env.NODE_ENV === "development" ? err.message : "Internal Server Error",
-    500
-  );
-};
+const handleServiceError = createErrorHandler(errorMap);
 
 export const listUsers = async (req, res) => {
   try {

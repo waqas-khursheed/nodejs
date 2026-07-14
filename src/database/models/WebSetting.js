@@ -149,7 +149,7 @@ WebSetting.init(
       allowNull: false,
     },
 
-    update_at: {
+    updated_at: {
       type: DataTypes.DATE,
       allowNull: true,
     },

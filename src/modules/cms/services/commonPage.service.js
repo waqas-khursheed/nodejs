@@ -7,7 +7,7 @@ import {
   deleteCommonPageRepo,
 } from "../repositories/commonPage.repository.js";
 import { slugify } from "../../../shared/helpers/helpers.js";
-import { deleteUploadedFile } from "../../../shared/utils/fileUtils.js";
+import { deleteUploadedFile, scheduleImageReplacement } from "../../../shared/utils/fileUtils.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
 
 const UPLOAD_FOLDER = "cms";
@@ -50,9 +50,7 @@ export const updateCommonPageService = async (id, data) => {
   const updateData = { ...data };
   if (data.title) updateData.slug = slugify(data.title);
 
-  if (data.image) {
-    deleteUploadedFile(UPLOAD_FOLDER, page.image);
-  }
+  scheduleImageReplacement(UPLOAD_FOLDER, page.image, data.image);
 
   return await updateCommonPageRepo(id, updateData);
 };

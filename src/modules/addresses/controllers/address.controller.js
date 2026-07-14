@@ -1,5 +1,8 @@
 import { getAddressService, upsertAddressService } from "../services/address.service.js";
-import { successDataResponse, errorResponse } from "../../../shared/responses/apiResponse.js";
+import { successDataResponse
+} from "../../../shared/responses/apiResponse.js";
+
+import { createErrorHandler } from "../../../shared/utils/controllerErrorHandler.js";
 
 const errorMap = {
   ADDRESS_NOT_FOUND: { code: 404, msg: "No saved address found" },
@@ -15,16 +18,7 @@ const errorMap = {
   CITY_NOT_FOUND_2: { code: 422, msg: "Selected secondary city does not exist" },
 };
 
-const handleServiceError = (res, err) => {
-  const mapped = errorMap[err.message];
-  if (mapped) return errorResponse(res, mapped.msg, mapped.code);
-
-  return errorResponse(
-    res,
-    process.env.NODE_ENV === "development" ? err.message : "Internal Server Error",
-    500
-  );
-};
+const handleServiceError = createErrorHandler(errorMap);
 
 export const getAddress = async (req, res) => {
   try {

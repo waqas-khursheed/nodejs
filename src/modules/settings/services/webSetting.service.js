@@ -1,5 +1,5 @@
 import WebSetting from "../../../database/models/WebSetting.js";
-import { deleteUploadedFile } from "../../../shared/utils/fileUtils.js";
+import { scheduleImageReplacement } from "../../../shared/utils/fileUtils.js";
 
 const UPLOAD_FOLDER = "settings";
 const IMAGE_FIELDS = ["main_logo", "fav_icon", "payment_logo"];
@@ -30,7 +30,7 @@ export const upsertWebSettingService = async (data) => {
   }
 
   for (const field of IMAGE_FIELDS) {
-    if (data[field]) deleteUploadedFile(UPLOAD_FOLDER, existing[field]);
+    scheduleImageReplacement(UPLOAD_FOLDER, existing[field], data[field]);
   }
 
   await WebSetting.update(data, { where: { id: existing.id } });

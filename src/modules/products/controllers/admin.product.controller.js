@@ -10,8 +10,9 @@ import {
 import {
   successResponse,
   successDataResponse,
-  errorResponse,
-} from "../../../shared/responses/apiResponse.js";
+  } from "../../../shared/responses/apiResponse.js";
+
+import { createErrorHandler } from "../../../shared/utils/controllerErrorHandler.js";
 
 const errorMap = {
   PRODUCT_ALREADY_EXISTS: { code: 409, msg: "A product with this title already exists" },
@@ -22,19 +23,7 @@ const errorMap = {
   GALLERY_IMAGE_NOT_FOUND: { code: 404, msg: "Gallery image not found" },
 };
 
-const handleServiceError = (res, err) => {
-  const mapped = errorMap[err.message];
-
-  if (mapped) {
-    return errorResponse(res, mapped.msg, mapped.code);
-  }
-
-  return errorResponse(
-    res,
-    process.env.NODE_ENV === "development" ? err.message : "Internal Server Error",
-    500
-  );
-};
+const handleServiceError = createErrorHandler(errorMap);
 
 // Accepts a JSON array string ("[1,2]"), a comma-separated string ("1,2"), or an array.
 const normalizeCategoryIds = (value) => {

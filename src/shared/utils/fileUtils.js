@@ -1,5 +1,6 @@
 import path from "path";
 import fs from "fs";
+import { logger } from "./logger.js";
 
 const storageRoot = path.join(process.cwd(), "src", "storage", "uploads");
 
@@ -11,7 +12,16 @@ export const deleteUploadedFile = (moduleName, filename) => {
 
   fs.unlink(filePath, (err) => {
     if (err && err.code !== "ENOENT") {
-      console.error(`Failed to delete file ${filePath}:`, err.message);
+      logger.error(`Failed to delete file ${filePath}`, { error: err.message });
     }
   });
+};
+
+// Cleans up the old file when a field is being replaced with a new upload —
+// this "is there an old one to remove" branch was repeated inline everywhere
+// a model has a replaceable image field (products, banners, CMS, ...).
+export const scheduleImageReplacement = (moduleName, oldFilename, newFilename) => {
+  if (newFilename && oldFilename) {
+    deleteUploadedFile(moduleName, oldFilename);
+  }
 };

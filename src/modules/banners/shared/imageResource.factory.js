@@ -1,4 +1,4 @@
-import { deleteUploadedFile } from "../../../shared/utils/fileUtils.js";
+import { deleteUploadedFile, scheduleImageReplacement } from "../../../shared/utils/fileUtils.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
 import {
   successResponse,
@@ -45,9 +45,7 @@ export const makeImageResourceModule = ({ Model, uploadFolder, resourceLabel, li
       const row = await Model.findByPk(id);
       if (!row) throw new Error("NOT_FOUND");
 
-      if (data.image) {
-        deleteUploadedFile(uploadFolder, row.image);
-      }
+      scheduleImageReplacement(uploadFolder, row.image, data.image);
 
       await Model.update(data, { where: { id } });
       return await Model.findByPk(id);

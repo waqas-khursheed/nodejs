@@ -8,6 +8,9 @@ export const couponSchema = Joi.object({
   status: Joi.number().valid(0, 1).required(),
   to_all: Joi.number().valid(0, 1).default(1),
   category_ids: Joi.array().items(Joi.number().integer().positive()).default([]),
+  expires_at: Joi.date().iso().allow(null),
+  usage_limit: Joi.number().integer().positive().allow(null),
+  min_order_amount: Joi.number().positive().allow(null),
 });
 
 export const updateCouponSchema = Joi.object({
@@ -16,6 +19,9 @@ export const updateCouponSchema = Joi.object({
   status: Joi.number().valid(0, 1),
   to_all: Joi.number().valid(0, 1),
   category_ids: Joi.array().items(Joi.number().integer().positive()),
+  expires_at: Joi.date().iso().allow(null),
+  usage_limit: Joi.number().integer().positive().allow(null),
+  min_order_amount: Joi.number().positive().allow(null),
 }).min(1);
 
 export const couponIdParamSchema = Joi.object({
@@ -27,4 +33,9 @@ export const couponListQuerySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(10),
   search: Joi.string().allow(""),
   status: Joi.number().valid(0, 1),
+});
+
+export const couponUsagesQuerySchema = Joi.object({
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
 });

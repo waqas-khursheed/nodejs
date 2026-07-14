@@ -1,3 +1,5 @@
+import { Op } from "sequelize";
+import { sequelize } from "../../../config/db.js";
 import Product from "../../../database/models/Product.js";
 import Stock from "../../../database/models/Stock.js";
 import UserReward from "../../../database/models/UserReward.js";
@@ -6,11 +8,12 @@ import WebSetting from "../../../database/models/WebSetting.js";
 import CardDetail from "../../../database/models/CardDetail.js";
 import {
   findActiveCouponByCodeRepo,
-  findCouponCategoryIdsRepo,
   findUsedCouponRepo,
   createUsedCouponRepo,
-  findProductCategoryIdsRepo,
 } from "../../coupons/repositories/user.coupon.repository.js";
+import { incrementCouponUsageRepo } from "../../coupons/repositories/coupon.repository.js";
+import { resolveEligibleSubtotal, assertCouponIsUsable } from "../../coupons/services/couponEligibility.service.js";
+import { notifyAdmins } from "../../../shared/services/notifier.service.js";
 import { getCartService, clearCartService } from "../../carts/services/cart.service.js";
 import {
   createOrderRepo,
@@ -32,22 +35,8 @@ const resolveCouponDiscount = async (userId, code, cart) => {
   const alreadyUsed = await findUsedCouponRepo(userId, coupon.id);
   if (alreadyUsed) throw new Error("COUPON_ALREADY_USED");
 
-  let eligibleSubtotal = cart.subTotal;
-
-  if (!coupon.to_all) {
-    const categoryIds = await findCouponCategoryIdsRepo(coupon.id);
-    const productIds = cart.items.map((item) => item.product_id);
-    const assignments = await findProductCategoryIdsRepo(productIds);
-    const eligibleProductIds = new Set(
-      assignments.filter((a) => categoryIds.includes(a.category_id)).map((a) => a.product_id)
-    );
-
-    eligibleSubtotal = cart.items
-      .filter((item) => eligibleProductIds.has(item.product_id))
-      .reduce((sum, item) => sum + item.lineTotal, 0);
-
-    if (eligibleSubtotal === 0) throw new Error("COUPON_NOT_APPLICABLE");
-  }
+  const eligibleSubtotal = await resolveEligibleSubtotal(coupon, cart);
+  assertCouponIsUsable(coupon, eligibleSubtotal);
 
   const discountAmount = round2((eligibleSubtotal * coupon.percentage) / 100);
   return { discountAmount, coupon };
@@ -94,39 +83,57 @@ const resolveShipping = async (subTotalAfterDiscounts) => {
 
 const generateOrderNumber = () => `ORD-${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
-const validateAndDecrementStock = async (cartItems) => {
-  for (const item of cartItems) {
-    if (item.stock_id) {
-      const stock = await Stock.findByPk(item.stock_id);
-      if (!stock) throw new Error("STOCK_NOT_FOUND");
-      if (stock.stock_qty !== null && stock.stock_qty < item.quantity) {
-        throw new Error("INSUFFICIENT_STOCK");
-      }
-    } else {
-      const product = await Product.findByPk(item.product_id);
-      if (!product) throw new Error("PRODUCT_NOT_FOUND");
-      if (product.quantity !== null && product.quantity < item.quantity) {
-        throw new Error("INSUFFICIENT_STOCK");
-      }
-    }
+// Loads every Stock/Product row a cart touches in two batched queries
+// (instead of one query per item, run twice over — once to validate, once
+// again later to build order-detail rows).
+const loadStockAndProductMaps = async (cartItems) => {
+  const stockIds = cartItems.filter((i) => i.stock_id).map((i) => i.stock_id);
+  const productIds = cartItems.filter((i) => !i.stock_id).map((i) => i.product_id);
+
+  const [stocks, products] = await Promise.all([
+    stockIds.length ? Stock.findAll({ where: { id: stockIds } }) : [],
+    productIds.length ? Product.findAll({ where: { id: productIds } }) : [],
+  ]);
+
+  return {
+    stockById: new Map(stocks.map((s) => [s.id, s])),
+    productById: new Map(products.map((p) => [p.id, p])),
+  };
+};
+
+// Atomically decrements stock/product quantity inside the transaction — the
+// `WHERE quantity >= :qty` condition is re-checked by MySQL against the live
+// row at UPDATE time (not the stale value read earlier), which is what
+// actually prevents two concurrent checkouts from both overselling the same
+// last unit. A plain "read qty, compare, then write" (the previous
+// implementation) has a gap between the read and the write where a second
+// request can slip through.
+const decrementStockOrProduct = async (item, stockById, productById, transaction) => {
+  if (item.stock_id) {
+    const stock = stockById.get(item.stock_id);
+    if (!stock) throw new Error("STOCK_NOT_FOUND");
+    if (stock.stock_qty === null) return; // untracked / unlimited stock
+
+    const [affected] = await Stock.update(
+      { stock_qty: sequelize.literal(`stock_qty - ${Number(item.quantity)}`) },
+      { where: { id: stock.id, stock_qty: { [Op.gte]: item.quantity } }, transaction }
+    );
+    if (affected === 0) throw new Error("INSUFFICIENT_STOCK");
+    return;
   }
 
-  for (const item of cartItems) {
-    if (item.stock_id) {
-      const stock = await Stock.findByPk(item.stock_id);
-      if (stock.stock_qty !== null) {
-        await Stock.update({ stock_qty: stock.stock_qty - item.quantity }, { where: { id: stock.id } });
-      }
-    } else {
-      const product = await Product.findByPk(item.product_id);
-      if (product.quantity !== null) {
-        await Product.update(
-          { quantity: product.quantity - item.quantity, sold: product.sold + item.quantity },
-          { where: { id: product.id } }
-        );
-      }
-    }
-  }
+  const product = productById.get(item.product_id);
+  if (!product) throw new Error("PRODUCT_NOT_FOUND");
+  if (product.quantity === null) return; // untracked / unlimited stock
+
+  const [affected] = await Product.update(
+    {
+      quantity: sequelize.literal(`quantity - ${Number(item.quantity)}`),
+      sold: sequelize.literal(`sold + ${Number(item.quantity)}`),
+    },
+    { where: { id: product.id, quantity: { [Op.gte]: item.quantity } }, transaction }
+  );
+  if (affected === 0) throw new Error("INSUFFICIENT_STOCK");
 };
 
 export const placeOrderService = async (user, data) => {
@@ -154,82 +161,114 @@ export const placeOrderService = async (user, data) => {
   const shipping = await resolveShipping(remaining);
   const grandTotal = round2(remaining + shipping);
 
-  await validateAndDecrementStock(cart.items);
+  const { stockById, productById } = await loadStockAndProductMaps(cart.items);
 
-  const order = await createOrderRepo({
-    order_number: generateOrderNumber(),
-    user_id: user.id,
-    user_ip: data.user_ip || "0.0.0.0",
-    status: 0,
-    pay_method: data.pay_method,
-    shipping,
-    sub_total: cart.subTotal,
-    coupon_discount: couponDiscount || null,
-    coupon_title: coupon ? coupon.code : null,
-    card_discount: cardDiscount || null,
-    card_no: card ? data.card_no : null,
-    rewards_discount: rewardsDiscount || 0,
-    grand_total: grandTotal,
-    type: data.type || null,
-    delivery_day: data.delivery_day || null,
-    delivery_start_time: data.delivery_start_time || null,
-    delivery_end_time: data.delivery_end_time || null,
-    payment_status: "pending",
-    order_type: 0,
-    is_deduction: rewardsDiscount > 0 ? 1 : 0,
-    seen: 0,
-  });
+  const orderId = await sequelize.transaction(async (transaction) => {
+    for (const item of cart.items) {
+      await decrementStockOrProduct(item, stockById, productById, transaction);
+    }
 
-  const orderDetailRows = [];
-  for (const item of cart.items) {
-    const stock = item.stock_id ? await Stock.findByPk(item.stock_id) : null;
-
-    orderDetailRows.push({
-      order_id: order.id,
-      product_id: item.product_id,
-      color_id: stock ? stock.color_id : null,
-      size_id: item.size_id ?? 0,
-      fitting_id: item.fitting_id,
-      quantity: item.quantity,
-      price: item.unitPrice,
-      dis_price: item.unitPrice,
-      total: item.lineTotal,
-      composite_attribute_key: item.composite_attribute_key,
-      date: new Date().toISOString().slice(0, 10),
-    });
-  }
-
-  await createOrderDetailsRepo(orderDetailRows);
-
-  await createBillingDetailRepo({
-    order_id: order.id,
-    firstname: data.billing.firstname,
-    lastname: data.billing.lastname,
-    email: data.billing.email,
-    phone: data.billing.phone,
-    company: data.billing.company,
-    address_1: data.billing.address_1,
-    address_2: data.billing.address_2,
-    city: data.billing.city,
-    postcode: data.billing.postcode,
-    country: data.billing.country,
-    state: data.billing.state,
-  });
-
-  if (coupon) {
-    await createUsedCouponRepo(user.id, coupon.id);
-  }
-
-  if (rewardsDiscount > 0 && userReward) {
-    await UserReward.update(
-      { rewards: round2(userReward.rewards - pointsUsed) },
-      { where: { id: userReward.id } }
+    const order = await createOrderRepo(
+      {
+        order_number: generateOrderNumber(),
+        user_id: user.id,
+        user_ip: data.user_ip || "0.0.0.0",
+        status: 0,
+        pay_method: data.pay_method,
+        shipping,
+        sub_total: cart.subTotal,
+        coupon_discount: couponDiscount || null,
+        coupon_title: coupon ? coupon.code : null,
+        card_discount: cardDiscount || null,
+        card_no: card ? data.card_no : null,
+        rewards_discount: rewardsDiscount || 0,
+        grand_total: grandTotal,
+        type: data.type || null,
+        delivery_day: data.delivery_day || null,
+        delivery_start_time: data.delivery_start_time || null,
+        delivery_end_time: data.delivery_end_time || null,
+        payment_status: "pending",
+        order_type: 0,
+        is_deduction: rewardsDiscount > 0 ? 1 : 0,
+        seen: 0,
+      },
+      { transaction }
     );
-  }
 
-  await clearCartService({ user_id: user.id });
+    const orderDetailRows = cart.items.map((item) => {
+      const stock = item.stock_id ? stockById.get(item.stock_id) : null;
 
-  return await findUserOrderByIdRepo(user.id, order.id);
+      return {
+        order_id: order.id,
+        product_id: item.product_id,
+        color_id: stock ? stock.color_id : null,
+        size_id: item.size_id ?? 0,
+        fitting_id: item.fitting_id,
+        quantity: item.quantity,
+        price: item.unitPrice,
+        dis_price: item.unitPrice,
+        total: item.lineTotal,
+        composite_attribute_key: item.composite_attribute_key,
+        date: new Date().toISOString().slice(0, 10),
+      };
+    });
+
+    await createOrderDetailsRepo(orderDetailRows, { transaction });
+
+    await createBillingDetailRepo(
+      {
+        order_id: order.id,
+        firstname: data.billing.firstname,
+        lastname: data.billing.lastname,
+        email: data.billing.email,
+        phone: data.billing.phone,
+        company: data.billing.company,
+        address_1: data.billing.address_1,
+        address_2: data.billing.address_2,
+        city: data.billing.city,
+        postcode: data.billing.postcode,
+        country: data.billing.country,
+        state: data.billing.state,
+      },
+      { transaction }
+    );
+
+    if (coupon) {
+      // Atomic — re-checks usage_limit against the live row, so a coupon
+      // that hits its cap between the earlier check and now aborts the
+      // whole order (rolled back) instead of overselling the discount.
+      const incremented = await incrementCouponUsageRepo(coupon.id, { transaction });
+      if (!incremented) throw new Error("COUPON_USAGE_LIMIT_REACHED");
+
+      await createUsedCouponRepo(user.id, coupon.id, { transaction });
+    }
+
+    if (rewardsDiscount > 0 && userReward) {
+      // Atomic conditional deduction — prevents two concurrent orders from
+      // the same user both redeeming the same points balance.
+      const [affected] = await UserReward.update(
+        { rewards: sequelize.literal(`rewards - ${round2(pointsUsed)}`) },
+        { where: { id: userReward.id, rewards: { [Op.gte]: pointsUsed } }, transaction }
+      );
+      if (affected === 0) throw new Error("REWARDS_BALANCE_CHANGED");
+    }
+
+    await clearCartService({ user_id: user.id }, { transaction });
+
+    return order.id;
+  });
+
+  const placedOrder = await findUserOrderByIdRepo(user.id, orderId);
+
+  // Best-effort — a failure here shouldn't undo an already-placed order.
+  notifyAdmins({
+    title: "New order received",
+    description: `Order ${placedOrder.order_number} placed by ${data.billing.firstname} ${data.billing.lastname} — $${grandTotal}`,
+    tableName: "orders",
+    rowId: orderId,
+  }).catch(() => {});
+
+  return placedOrder;
 };
 
 export const getUserOrdersService = async (userId, query) => {

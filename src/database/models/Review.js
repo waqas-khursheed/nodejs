@@ -59,6 +59,12 @@ Review.init(
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
+
+    is_verified_purchase: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 0,
+    },
   },
   {
     sequelize,

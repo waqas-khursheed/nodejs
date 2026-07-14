@@ -15,6 +15,25 @@ class Stock extends Model {
       foreignKey: "product_id",
       as: "product",
     });
+
+    // color_id/size_id/fitting_id all point at the same `attribute_items`
+    // table (there's no separate Color/Size/Fitting model — those are just
+    // AttributeItem rows grouped under different ProductAttribute types),
+    // so three separate aliased associations to the same target model.
+    Stock.belongsTo(models.AttributeItem, {
+      foreignKey: "color_id",
+      as: "color",
+    });
+
+    Stock.belongsTo(models.AttributeItem, {
+      foreignKey: "size_id",
+      as: "size",
+    });
+
+    Stock.belongsTo(models.AttributeItem, {
+      foreignKey: "fitting_id",
+      as: "fitting",
+    });
   }
 }
 
@@ -98,13 +117,6 @@ Stock.init(
       defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
     },
 
-    // No defaultValue here: "... ON UPDATE CURRENT_TIMESTAMP" is only valid
-    // in a column DEFINITION (see the migration), not as an INSERT/UPDATE
-    // value expression. The DB column default handles this automatically.
-    update_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
   },
   {
     sequelize,
@@ -112,7 +124,13 @@ Stock.init(
     modelName: "Stock",
     tableName: "stocks",
 
-    timestamps: false,
+    // `created_at` is still DB-managed (see the migration's CURRENT_TIMESTAMP
+    // default) rather than Sequelize-managed, so only updatedAt is mapped
+    // here — this is what lets Sequelize see `stock_qty` writes update
+    // `updated_at` (it was previously an untracked plain column).
+    timestamps: true,
+    createdAt: false,
+    updatedAt: "updated_at",
   }
 );
 

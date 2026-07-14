@@ -8,7 +8,7 @@ import {
   deleteBrandRepo,
 } from "../repositories/brand.repository.js";
 import { slugify } from "../../../shared/helpers/helpers.js";
-import { deleteUploadedFile } from "../../../shared/utils/fileUtils.js";
+import { deleteUploadedFile, scheduleImageReplacement } from "../../../shared/utils/fileUtils.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
 
 export const createBrandService = async (data) => {
@@ -93,11 +93,11 @@ export const updateBrandService = async (id, data) => {
 
   if (logo) {
     updateData.logo = logo;
-    if (brand.logo) deleteUploadedFile("brands", brand.logo);
+    scheduleImageReplacement("brands", brand.logo, logo);
   }
   if (banner) {
     updateData.banner = banner;
-    if (brand.banner) deleteUploadedFile("brands", brand.banner);
+    scheduleImageReplacement("brands", brand.banner, banner);
   }
 
   return await updateBrandRepo(id, updateData);

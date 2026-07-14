@@ -8,7 +8,7 @@ import {
   deleteCategoryRepo,
 } from "../repositories/category.repository.js";
 import { slugify } from "../../../shared/helpers/helpers.js";
-import { deleteUploadedFile } from "../../../shared/utils/fileUtils.js";
+import { deleteUploadedFile, scheduleImageReplacement } from "../../../shared/utils/fileUtils.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
 
 export const createCategoryService = async (data) => {
@@ -157,11 +157,11 @@ export const updateCategoryService = async (id, data) => {
   // replace image/icon (and clean up old file)
   if (image) {
     updateData.image = image;
-    if (category.image) deleteUploadedFile("categories", category.image);
+    scheduleImageReplacement("categories", category.image, image);
   }
   if (icon) {
     updateData.icon = icon;
-    if (category.icon) deleteUploadedFile("categories", category.icon);
+    scheduleImageReplacement("categories", category.icon, icon);
   }
 
   return await updateCategoryRepo(id, updateData);

@@ -36,6 +36,7 @@ import Notification from "./Notification.js";
 import Order from "./Order.js";
 import OrderDetail from "./OrderDetail.js";
 import OrderGallery from "./OrderGallery.js";
+import OrderStatusHistory from "./OrderStatusHistory.js";
 import PasswordReset from "./PasswordReset.js";
 import Product from "./Product.js";
 import ProductAttribute from "./ProductAttribute.js";
@@ -102,6 +103,7 @@ const models = {
   Order,
   OrderDetail,
   OrderGallery,
+  OrderStatusHistory,
   PasswordReset,
   Product,
   ProductAttribute,
@@ -176,6 +178,7 @@ export {
   Order,
   OrderDetail,
   OrderGallery,
+  OrderStatusHistory,
   PasswordReset,
   Product,
   ProductAttribute,

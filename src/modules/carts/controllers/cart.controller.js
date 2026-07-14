@@ -5,7 +5,10 @@ import {
   getCartService,
   clearCartService,
 } from "../services/cart.service.js";
-import { successResponse, successDataResponse, errorResponse } from "../../../shared/responses/apiResponse.js";
+import { successResponse, successDataResponse
+} from "../../../shared/responses/apiResponse.js";
+
+import { createErrorHandler } from "../../../shared/utils/controllerErrorHandler.js";
 
 const errorMap = {
   PRODUCT_NOT_FOUND: { code: 404, msg: "Product not found or unavailable" },
@@ -15,16 +18,7 @@ const errorMap = {
   CART_ITEM_NOT_FOUND: { code: 404, msg: "Cart item not found" },
 };
 
-const handleServiceError = (res, err) => {
-  const mapped = errorMap[err.message];
-  if (mapped) return errorResponse(res, mapped.msg, mapped.code);
-
-  return errorResponse(
-    res,
-    process.env.NODE_ENV === "development" ? err.message : "Internal Server Error",
-    500
-  );
-};
+const handleServiceError = createErrorHandler(errorMap);
 
 export const addToCart = async (req, res) => {
   try {

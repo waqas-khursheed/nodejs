@@ -1,5 +1,5 @@
 import Slide from "../../../database/models/Slide.js";
-import { deleteUploadedFile } from "../../../shared/utils/fileUtils.js";
+import { deleteUploadedFile, scheduleImageReplacement } from "../../../shared/utils/fileUtils.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
 
 export const createSlideService = async (data) => {
@@ -35,9 +35,7 @@ export const updateSlideService = async (id, data) => {
   const slide = await Slide.findByPk(id);
   if (!slide) throw new Error("SLIDE_NOT_FOUND");
 
-  if (data.image) {
-    deleteUploadedFile("slides", slide.image);
-  }
+  scheduleImageReplacement("slides", slide.image, data.image);
 
   await Slide.update(data, { where: { id } });
   return await Slide.findByPk(id);

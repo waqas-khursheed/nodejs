@@ -2,23 +2,17 @@ import {
   getProductCitiesService,
   syncProductCitiesService,
 } from "../services/productCity.service.js";
-import { successDataResponse, errorResponse } from "../../../shared/responses/apiResponse.js";
+import { successDataResponse
+} from "../../../shared/responses/apiResponse.js";
+
+import { createErrorHandler } from "../../../shared/utils/controllerErrorHandler.js";
 
 const errorMap = {
   PRODUCT_NOT_FOUND: { code: 404, msg: "Product not found" },
   CITY_NOT_FOUND: { code: 422, msg: "One or more selected cities do not exist" },
 };
 
-const handleServiceError = (res, err) => {
-  const mapped = errorMap[err.message];
-  if (mapped) return errorResponse(res, mapped.msg, mapped.code);
-
-  return errorResponse(
-    res,
-    process.env.NODE_ENV === "development" ? err.message : "Internal Server Error",
-    500
-  );
-};
+const handleServiceError = createErrorHandler(errorMap);
 
 export const getProductCities = async (req, res) => {
   try {

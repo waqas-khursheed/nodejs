@@ -42,8 +42,8 @@ export const deleteCartItemRepo = async (id) => {
   return await Cart.destroy({ where: { id } });
 };
 
-export const clearCartRepo = async (owner) => {
-  return await Cart.destroy({ where: ownerWhere(owner) });
+export const clearCartRepo = async (owner, options = {}) => {
+  return await Cart.destroy({ where: ownerWhere(owner), ...options });
 };
 
 export const findStockByIdForProductRepo = async (stockId, productId) => {

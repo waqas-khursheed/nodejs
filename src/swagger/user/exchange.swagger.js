@@ -4,14 +4,18 @@
  *   post:
  *     tags: [User Exchanges]
  *     summary: Submit an order return/exchange request
- *     description: Public endpoint — matches the reference site's guest-accessible exchange form (identified by order number/email, not a login).
+ *     description: >
+ *       Public endpoint — identified by order number/email, not a login.
+ *       `order_number` must match a real, existing order (looked up and
+ *       linked internally via `order_id`); if `email` is also provided it
+ *       must match that order's account/billing email.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [customer_name]
+ *             required: [order_number, customer_name]
  *             properties:
  *               order_number: { type: string, example: "ORD-1783617310252218" }
  *               customer_name: { type: string, example: "Test Buyer" }
@@ -32,4 +36,14 @@
  *         content:
  *           application/json:
  *             schema: { $ref: "#/components/schemas/SuccessDataResponse" }
+ *       404:
+ *         description: No order was found with that order number
+ *         content:
+ *           application/json:
+ *             schema: { $ref: "#/components/schemas/ErrorResponse" }
+ *       403:
+ *         description: The email provided does not match this order
+ *         content:
+ *           application/json:
+ *             schema: { $ref: "#/components/schemas/ErrorResponse" }
  */

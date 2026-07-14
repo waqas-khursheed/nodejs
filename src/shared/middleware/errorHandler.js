@@ -1,8 +1,16 @@
 import { AppError } from "../errors/AppError.js";
+import { logger } from "../utils/logger.js";
 
 export const errorHandler = (err, req, res, next) => {
   let error = { ...err };
   error.message = err.message;
+
+  if (!err.isOperational) {
+    logger.error(`Unhandled error on ${req.method} ${req.originalUrl}`, {
+      error: err.message,
+      stack: err.stack,
+    });
+  }
 
   // =====================================
   // Sequelize: Model Not Found / Invalid ID

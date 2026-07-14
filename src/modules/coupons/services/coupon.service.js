@@ -1,13 +1,16 @@
 import { Op } from "sequelize";
+import { sequelize } from "../../../config/db.js";
 import {
   createCouponRepo,
   findCouponByCodeRepo,
   findCouponByIdRepo,
   findAllCouponsRepo,
   updateCouponRepo,
+  updateCouponFieldsRepo,
   deleteCouponRepo,
   syncCouponCategoriesRepo,
   findCategoriesByIdsRepo,
+  findUsedCouponsByCouponIdRepo,
 } from "../repositories/coupon.repository.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
 
@@ -30,13 +33,17 @@ export const createCouponService = async (data) => {
 
   await validateCategoryIds(category_ids);
 
-  const coupon = await createCouponRepo({ code: code.toUpperCase(), ...rest });
+  const couponId = await sequelize.transaction(async (transaction) => {
+    const coupon = await createCouponRepo({ code: code.toUpperCase(), ...rest }, { transaction });
 
-  if (category_ids && category_ids.length > 0) {
-    await syncCouponCategoriesRepo(coupon.id, category_ids);
-  }
+    if (category_ids && category_ids.length > 0) {
+      await syncCouponCategoriesRepo(coupon.id, category_ids, { transaction });
+    }
 
-  return await findCouponByIdRepo(coupon.id, true);
+    return coupon.id;
+  });
+
+  return await findCouponByIdRepo(couponId, true);
 };
 
 export const getCouponsService = async (query) => {
@@ -78,11 +85,13 @@ export const updateCouponService = async (id, data) => {
   const updateData = { ...rest };
   if (code !== undefined) updateData.code = code.toUpperCase();
 
-  await updateCouponRepo(id, updateData);
+  await sequelize.transaction(async (transaction) => {
+    await updateCouponFieldsRepo(id, updateData, { transaction });
 
-  if (category_ids !== undefined) {
-    await syncCouponCategoriesRepo(id, category_ids);
-  }
+    if (category_ids !== undefined) {
+      await syncCouponCategoriesRepo(id, category_ids, { transaction });
+    }
+  });
 
   return await findCouponByIdRepo(id, true);
 };
@@ -101,4 +110,14 @@ export const deleteCouponService = async (id) => {
 
   await deleteCouponRepo(id);
   return true;
+};
+
+export const getCouponUsagesService = async (id, query) => {
+  const coupon = await findCouponByIdRepo(id);
+  if (!coupon) throw new Error("COUPON_NOT_FOUND");
+
+  const { page, limit, offset } = getPagination(query);
+  const { count, rows } = await findUsedCouponsByCouponIdRepo(id, { limit, offset });
+
+  return { usages: rows, meta: buildPaginationMeta({ count, page, limit }) };
 };

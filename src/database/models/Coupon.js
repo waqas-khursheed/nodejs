@@ -57,6 +57,28 @@ Coupon.init(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+
+    expires_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+
+    // Max total redemptions across all customers. NULL = unlimited.
+    usage_limit: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+
+    used_count: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+
+    min_order_amount: {
+      type: DataTypes.DOUBLE,
+      allowNull: true,
+    },
   },
   {
     sequelize,

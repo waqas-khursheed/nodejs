@@ -10,6 +10,10 @@
  *         percentage: { type: number, example: 20 }
  *         status: { type: integer, enum: [0, 1], example: 1 }
  *         to_all: { type: integer, enum: [0, 1], example: 1, description: "1 = applies to all categories, 0 = restricted to metaCouponCategories" }
+ *         expires_at: { type: string, format: date-time, nullable: true, description: "Coupon can no longer be used after this date. Null = never expires." }
+ *         usage_limit: { type: integer, nullable: true, example: 500, description: "Max total redemptions across all customers. Null = unlimited." }
+ *         used_count: { type: integer, example: 42, description: "Total redemptions so far." }
+ *         min_order_amount: { type: number, nullable: true, example: 50, description: "Minimum eligible order subtotal required to use this coupon. Null = no minimum." }
  *         created_at: { type: string, format: date-time }
  *         metaCouponCategories:
  *           type: array
@@ -48,6 +52,9 @@
  *                 type: array
  *                 items: { type: integer }
  *                 example: [1, 2]
+ *               expires_at: { type: string, format: date-time, nullable: true }
+ *               usage_limit: { type: integer, nullable: true, example: 500 }
+ *               min_order_amount: { type: number, nullable: true, example: 50 }
  *     responses:
  *       201:
  *         description: Coupon created
@@ -166,6 +173,9 @@
  *               category_ids:
  *                 type: array
  *                 items: { type: integer }
+ *               expires_at: { type: string, format: date-time, nullable: true }
+ *               usage_limit: { type: integer, nullable: true }
+ *               min_order_amount: { type: number, nullable: true }
  *     responses:
  *       200:
  *         description: Coupon updated
@@ -201,6 +211,68 @@
  *         content:
  *           application/json:
  *             schema: { $ref: "#/components/schemas/SuccessResponse" }
+ *       404:
+ *         description: Coupon not found
+ *         content:
+ *           application/json:
+ *             schema: { $ref: "#/components/schemas/ErrorResponse" }
+ */
+
+/**
+ * @openapi
+ * /api/admin/coupon/{id}/usages:
+ *   get:
+ *     tags: [Admin Coupons]
+ *     summary: List redemption history for a coupon (paginated)
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10 }
+ *     responses:
+ *       200:
+ *         description: Usage history fetched
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: "#/components/schemas/SuccessDataResponse"
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         usages:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               id: { type: integer }
+ *                               coupon_id: { type: integer }
+ *                               user_id: { type: integer, nullable: true }
+ *                               created_at: { type: string, format: date-time }
+ *                               user:
+ *                                 type: object
+ *                                 nullable: true
+ *                                 properties:
+ *                                   id: { type: integer }
+ *                                   first_name: { type: string }
+ *                                   last_name: { type: string }
+ *                                   email: { type: string }
+ *                         meta:
+ *                           type: object
+ *                           properties:
+ *                             total: { type: integer }
+ *                             page: { type: integer }
+ *                             limit: { type: integer }
+ *                             totalPages: { type: integer }
  *       404:
  *         description: Coupon not found
  *         content:

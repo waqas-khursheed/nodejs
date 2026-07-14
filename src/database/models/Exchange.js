@@ -2,7 +2,12 @@ import { DataTypes, Model, Sequelize } from "sequelize";
 import { sequelize } from "../../config/db.js";
 
 class Exchange extends Model {
-  static associate(models) {}
+  static associate(models) {
+    Exchange.belongsTo(models.Order, {
+      foreignKey: "order_id",
+      as: "order",
+    });
+  }
 
 }
 
@@ -12,6 +17,11 @@ Exchange.init(
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
+    },
+
+    order_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
 
     order_number: {

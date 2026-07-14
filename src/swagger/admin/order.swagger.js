@@ -39,6 +39,23 @@
  *               address_1: { type: string }
  *               city: { type: string }
  *               country: { type: string }
+ *         statusHistory:
+ *           type: array
+ *           description: Audit trail of status/payment_status changes, newest first. Only present on GET /:id, not on the list endpoint.
+ *           items:
+ *             type: object
+ *             properties:
+ *               id: { type: integer }
+ *               field: { type: string, example: "status" }
+ *               from_value: { type: string, nullable: true }
+ *               to_value: { type: string }
+ *               created_at: { type: string, format: date-time }
+ *               changedByAdmin:
+ *                 type: object
+ *                 nullable: true
+ *                 properties:
+ *                   id: { type: integer }
+ *                   name: { type: string }
  */
 
 /**
