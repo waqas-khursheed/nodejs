@@ -55,7 +55,10 @@ export const findActiveProductsRepo = async ({
       model: AssignCatToProduct,
       as: "assignCatToProducts",
       required: true,
-      attributes: [],
+      // Keep category_id (not attributes: []) — Sequelize needs it to build
+      // the join to the nested `category` include below; stripping it
+      // entirely breaks the generated SQL ("Unknown column ... in on clause").
+      attributes: ["category_id"],
       include: [
         { model: ProductCategory, as: "category", where: { slug: categorySlug, status: 1 }, attributes: [] },
       ],
@@ -67,7 +70,8 @@ export const findActiveProductsRepo = async ({
       model: AssignTagToProduct,
       as: "assignTagToProducts",
       required: true,
-      attributes: [],
+      // Same reason as the category join above — keep tag_id for the nested join.
+      attributes: ["tag_id"],
       include: [{ model: ProductTag, as: "tag", where: { slug: tagSlug }, attributes: [] }],
     });
   }
@@ -79,6 +83,12 @@ export const findActiveProductsRepo = async ({
     order,
     include,
     distinct: true,
+    // Sequelize's automatic subquery pagination drops the intermediate join
+    // table when there's a nested (belongsTo-through-hasMany) include, e.g.
+    // assignCatToProducts -> category, producing "Unknown column ... in on
+    // clause". findRelatedProductsRepo below already disables this for the
+    // same reason.
+    subQuery: false,
   });
 };
 

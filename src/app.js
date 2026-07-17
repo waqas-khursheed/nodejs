@@ -56,7 +56,7 @@ app.use(
 // any origin). Configure via ALLOWED_ORIGINS in .env (comma-separated);
 // defaults to the local admin/user frontend dev ports.
 const allowedOrigins = (
-  process.env.ALLOWED_ORIGINS || "http://localhost:3001,http://localhost:3002"
+  process.env.ALLOWED_ORIGINS || "http://localhost:3001,http://localhost:3002, http://localhost:3008"
 )
   .split(",")
   .map((origin) => origin.trim())
