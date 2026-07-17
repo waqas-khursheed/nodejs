@@ -1,7 +1,13 @@
 import adminTagRoute from "./routes/admin.tag.routes.js";
 import adminProductTagRoute from "./routes/admin.productTag.routes.js";
+import userTagRoute from "./routes/user.tag.routes.js";
 
 const tagModule = (app) => {
+  // =========================
+  //  USER ROUTES
+  // =========================
+  app.use("/api/tags", userTagRoute);
+
   // =========================
   //  ADMIN ROUTES
   // =========================

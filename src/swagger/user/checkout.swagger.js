@@ -13,7 +13,6 @@
  *         sub_total: { type: number, example: 79.99 }
  *         coupon_discount: { type: number, nullable: true, example: 8 }
  *         coupon_title: { type: string, nullable: true, example: "SAVE10" }
- *         card_discount: { type: number, nullable: true }
  *         rewards_discount: { type: number, example: 0 }
  *         grand_total: { type: number, example: 71.99 }
  *         payment_status: { type: string, example: "pending" }
@@ -52,10 +51,11 @@
  *     tags: [User Checkout & Orders]
  *     summary: Place an order from the current cart
  *     description: >
- *       Re-validates stock, applies (in order) coupon discount → card discount
- *       → reward-points discount, computes shipping from web settings, creates
- *       the Order/OrderDetail/BillingDetail rows, decrements stock, records
- *       coupon usage and reward-point deduction, and clears the cart.
+ *       Re-validates stock, applies (in order) coupon discount → reward-points
+ *       discount, computes shipping from web settings, creates the
+ *       Order/OrderDetail/BillingDetail rows, decrements stock, records
+ *       coupon usage and reward-point deduction, and clears the cart. Card
+ *       payment is disabled for now — cash on delivery only.
  *     security: [{ bearerAuth: [] }]
  *     requestBody:
  *       required: true
@@ -65,9 +65,8 @@
  *             type: object
  *             required: [pay_method, billing]
  *             properties:
- *               pay_method: { type: string, enum: [cod, card], example: "cod" }
+ *               pay_method: { type: string, enum: [cod], example: "cod" }
  *               coupon_code: { type: string, example: "SAVE10" }
- *               card_no: { type: integer, example: 411111, description: "Optional — matched against admin-configured card discounts" }
  *               use_reward: { type: boolean, default: false }
  *               delivery_day: { type: string, example: "Monday" }
  *               delivery_start_time: { type: string, example: "09:00:00" }

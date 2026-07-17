@@ -6,12 +6,8 @@ import AssignCatToProduct from "./AssignCatToProduct.js";
 import AssignTagToProduct from "./AssignTagToProduct.js";
 import AssignTagToTag from "./AssignTagToTag.js";
 import AttributeItem from "./AttributeItem.js";
-import Bank from "./Bank.js";
 import BillingDetail from "./BillingDetail.js";
 import Brand from "./Brand.js";
-import CardCategory from "./CardCategory.js";
-import CardDetail from "./CardDetail.js";
-import CardType from "./CardType.js";
 import Cart from "./Cart.js";
 import City from "./City.js";
 import CommonPage from "./CommonPage.js";
@@ -29,7 +25,6 @@ import GeoSubContinent from "./GeoSubContinent.js";
 import GeoZone from "./GeoZone.js";
 import HomeBanner from "./HomeBanner.js";
 import MetaCouponCategory from "./MetaCouponCategory.js";
-import MobileCard from "./MobileCard.js";
 import MobileCoupon from "./MobileCoupon.js";
 import MobileSlider from "./MobileSlider.js";
 import Notification from "./Notification.js";
@@ -73,12 +68,8 @@ const models = {
   AssignTagToProduct,
   AssignTagToTag,
   AttributeItem,
-  Bank,
   BillingDetail,
   Brand,
-  CardCategory,
-  CardDetail,
-  CardType,
   Cart,
   City,
   CommonPage,
@@ -96,7 +87,6 @@ const models = {
   GeoZone,
   HomeBanner,
   MetaCouponCategory,
-  MobileCard,
   MobileCoupon,
   MobileSlider,
   Notification,
@@ -148,12 +138,8 @@ export {
   AssignTagToProduct,
   AssignTagToTag,
   AttributeItem,
-  Bank,
   BillingDetail,
   Brand,
-  CardCategory,
-  CardDetail,
-  CardType,
   Cart,
   City,
   CommonPage,
@@ -171,7 +157,6 @@ export {
   GeoZone,
   HomeBanner,
   MetaCouponCategory,
-  MobileCard,
   MobileCoupon,
   MobileSlider,
   Notification,

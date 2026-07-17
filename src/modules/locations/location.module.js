@@ -8,8 +8,14 @@ import adminGeoStateRoute from "./routes/admin.geoState.routes.js";
 import adminGeoCityRoute from "./routes/admin.geoCity.routes.js";
 import adminGeoZoneRoute from "./routes/admin.geoZone.routes.js";
 import adminProductCityRoute from "./routes/admin.productCity.routes.js";
+import userLocationRoute from "./routes/user.location.routes.js";
 
 const locationModule = (app) => {
+  // =========================
+  //  USER ROUTES — public read-only lookups (Address Book, checkout pickers)
+  // =========================
+  app.use("/api", userLocationRoute);
+
   // =========================
   //  ADMIN ROUTES — legacy flat location tables
   // =========================

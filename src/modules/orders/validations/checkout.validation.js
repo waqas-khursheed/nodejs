@@ -15,10 +15,10 @@ const billingSchema = Joi.object({
 });
 
 export const checkoutSchema = Joi.object({
-  pay_method: Joi.string().trim().valid("cod", "card").required(),
+  // Card payment is disabled for now — cash on delivery only.
+  pay_method: Joi.string().trim().valid("cod").default("cod"),
   billing: billingSchema.required(),
   coupon_code: Joi.string().trim().allow(""),
-  card_no: Joi.number().integer(),
   use_reward: Joi.boolean().default(false),
   delivery_day: Joi.string().trim().max(50).allow(""),
   delivery_start_time: Joi.string().trim().allow(""),

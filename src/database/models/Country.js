@@ -10,12 +10,6 @@ class Country extends Model {
       onDelete: "CASCADE",
     });
 
-    Country.hasMany(models.CardDetail, {
-      foreignKey: "country_id",
-      as: "cardDetails",
-      onDelete: "CASCADE",
-    });
-
     Country.hasMany(models.UserAddress, {
       foreignKey: "country_id1",
       as: "userAddressesAsCountry1",

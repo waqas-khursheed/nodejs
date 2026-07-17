@@ -5,7 +5,6 @@ import Stock from "../../../database/models/Stock.js";
 import UserReward from "../../../database/models/UserReward.js";
 import RewardSetting from "../../../database/models/RewardSetting.js";
 import WebSetting from "../../../database/models/WebSetting.js";
-import CardDetail from "../../../database/models/CardDetail.js";
 import {
   findActiveCouponByCodeRepo,
   findUsedCouponRepo,
@@ -22,6 +21,7 @@ import {
   findUserOrderByIdRepo,
   findUserOrdersRepo,
 } from "../repositories/user.order.repository.js";
+import { updateOrderFieldsRepo, createOrderStatusHistoryRepo } from "../repositories/order.repository.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
 
 const round2 = (n) => Number(n.toFixed(2));
@@ -40,16 +40,6 @@ const resolveCouponDiscount = async (userId, code, cart) => {
 
   const discountAmount = round2((eligibleSubtotal * coupon.percentage) / 100);
   return { discountAmount, coupon };
-};
-
-const resolveCardDiscount = async (card_no, remaining) => {
-  if (!card_no) return { discountAmount: 0, card: null };
-
-  const card = await CardDetail.findOne({ where: { card_no, status: 1 } });
-  if (!card) return { discountAmount: 0, card: null };
-
-  const discountAmount = round2((remaining * card.percentage) / 100);
-  return { discountAmount, card };
 };
 
 const resolveRewardsDiscount = async (userId, useReward, remaining) => {
@@ -148,9 +138,6 @@ export const placeOrderService = async (user, data) => {
 
   let remaining = round2(cart.subTotal - couponDiscount);
 
-  const { discountAmount: cardDiscount, card } = await resolveCardDiscount(data.card_no, remaining);
-  remaining = round2(remaining - cardDiscount);
-
   const { discountAmount: rewardsDiscount, pointsUsed, userReward } = await resolveRewardsDiscount(
     user.id,
     data.use_reward,
@@ -179,8 +166,6 @@ export const placeOrderService = async (user, data) => {
         sub_total: cart.subTotal,
         coupon_discount: couponDiscount || null,
         coupon_title: coupon ? coupon.code : null,
-        card_discount: cardDiscount || null,
-        card_no: card ? data.card_no : null,
         rewards_discount: rewardsDiscount || 0,
         grand_total: grandTotal,
         type: data.type || null,
@@ -282,4 +267,61 @@ export const getUserOrderByIdService = async (userId, orderId) => {
   const order = await findUserOrderByIdRepo(userId, orderId);
   if (!order) throw new Error("ORDER_NOT_FOUND");
   return order;
+};
+
+// Order status codes (see frontend_admin/src/types/order.ts ORDER_STATUS_LABELS,
+// the single source of truth for what each number means): 0 Pending, 1
+// Processing, 2 Shipped, 3 Delivered, 4 Completed, 5 Cancelled, 6 Returned,
+// 7 Refunded, 8 Failed, 9 On Hold. Self-service cancellation is only allowed
+// while still Pending — once an admin starts processing it, the customer
+// has to go through support (or the exchange form) instead.
+const CANCELLABLE_STATUS = 0;
+const CANCELLED_STATUS = 5;
+
+export const cancelOrderService = async (userId, orderId) => {
+  const order = await findUserOrderByIdRepo(userId, orderId);
+  if (!order) throw new Error("ORDER_NOT_FOUND");
+  if (order.status !== CANCELLABLE_STATUS) throw new Error("ORDER_NOT_CANCELLABLE");
+
+  await sequelize.transaction(async (transaction) => {
+    for (const detail of order.orderDetails) {
+      // Reconstruct which Stock row (if any) this line came from — OrderDetail
+      // doesn't keep the stock_id itself, only the attribute combo it was sold
+      // under, so match it back the same way it was matched at checkout.
+      const stock = await Stock.findOne({
+        where: {
+          product_id: detail.product_id,
+          color_id: detail.color_id,
+          size_id: detail.size_id,
+          fitting_id: detail.fitting_id,
+        },
+        transaction,
+      });
+
+      if (stock) {
+        // NULL stock_qty means "untracked/unlimited" — NULL + N is still NULL
+        // in SQL, so this is naturally a no-op for those rows.
+        await Stock.update(
+          { stock_qty: sequelize.literal(`stock_qty + ${Number(detail.quantity)}`) },
+          { where: { id: stock.id }, transaction }
+        );
+      } else {
+        await Product.update(
+          {
+            quantity: sequelize.literal(`quantity + ${Number(detail.quantity)}`),
+            sold: sequelize.literal(`GREATEST(sold - ${Number(detail.quantity)}, 0)`),
+          },
+          { where: { id: detail.product_id }, transaction }
+        );
+      }
+    }
+
+    await updateOrderFieldsRepo(orderId, { status: CANCELLED_STATUS }, { transaction });
+    await createOrderStatusHistoryRepo(
+      { orderId, field: "status", fromValue: order.status, toValue: CANCELLED_STATUS, changedByAdminId: null },
+      { transaction }
+    );
+  });
+
+  return await findUserOrderByIdRepo(userId, orderId);
 };

@@ -2,6 +2,7 @@ import {
   placeOrderService,
   getUserOrdersService,
   getUserOrderByIdService,
+  cancelOrderService,
 } from "../services/checkout.service.js";
 import { successDataResponse
 } from "../../../shared/responses/apiResponse.js";
@@ -21,6 +22,7 @@ const errorMap = {
   INSUFFICIENT_STOCK: { code: 409, msg: "One or more items in your cart no longer have enough stock" },
   PRODUCT_NOT_FOUND: { code: 404, msg: "One or more products in your cart no longer exist" },
   ORDER_NOT_FOUND: { code: 404, msg: "Order not found" },
+  ORDER_NOT_CANCELLABLE: { code: 409, msg: "This order can no longer be cancelled" },
 };
 
 const handleServiceError = createErrorHandler(errorMap);
@@ -47,6 +49,15 @@ export const getMyOrder = async (req, res) => {
   try {
     const result = await getUserOrderByIdService(req.user.id, req.params.id);
     return successDataResponse(res, "Order fetched successfully", result, 200);
+  } catch (error) {
+    return handleServiceError(res, error);
+  }
+};
+
+export const cancelMyOrder = async (req, res) => {
+  try {
+    const result = await cancelOrderService(req.user.id, req.params.id);
+    return successDataResponse(res, "Order cancelled successfully", result, 200);
   } catch (error) {
     return handleServiceError(res, error);
   }

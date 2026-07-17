@@ -4,6 +4,8 @@ import ResetPasswordCode from "../../../database/models/ResetPasswordCode.js";
 import { hashPassword, comparePassword } from "../../../shared/utils/hash.js";
 import { generateToken } from "../../../shared/utils/jwt.js";
 import { sendMail } from "../../../shared/utils/mailer.js";
+import { scheduleImageReplacement } from "../../../shared/utils/fileUtils.js";
+import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
 
 const publicUser = (user) => ({
   id: user.id,
@@ -15,6 +17,15 @@ const publicUser = (user) => ({
   type: user.type,
   company_name: user.company_name,
   is_active: user.is_active,
+});
+
+const publicAdmin = (admin) => ({
+  id: admin.id,
+  name: admin.name,
+  email: admin.email,
+  image: admin.image,
+  is_admin: admin.is_admin,
+  is_active: admin.is_active,
 });
 
 const registerUserService = async (data) => {
@@ -186,13 +197,99 @@ const adminLoginService = async (data) => {
   });
 
   return {
-    admin: {
-      id: admin.id,
-      name: admin.name,
-      email: admin.email,
-    },
+    admin: publicAdmin(admin),
     token,
   };
+};
+
+// =========================
+// ADMIN SELF-SERVICE PROFILE
+// =========================
+// Distinct from the customer-facing getProfileService/updateProfileService/
+// changePasswordService above — those operate on the `users` table for
+// storefront accounts, these operate on `admins` for the admin panel's own
+// logged-in account.
+const getAdminProfileService = async (adminId) => {
+  const admin = await Admin.findByPk(adminId);
+  if (!admin) throw new Error("ADMIN_NOT_FOUND");
+  return publicAdmin(admin);
+};
+
+const updateAdminProfileService = async (adminId, data) => {
+  const admin = await Admin.findByPk(adminId);
+  if (!admin) throw new Error("ADMIN_NOT_FOUND");
+
+  if (data.email && data.email !== admin.email) {
+    const emailTaken = await Admin.findOne({ where: { email: data.email } });
+    if (emailTaken) throw new Error("EMAIL_EXISTS");
+  }
+
+  scheduleImageReplacement("admins", admin.image, data.image);
+
+  await Admin.update(data, { where: { id: adminId } });
+  return publicAdmin(await Admin.findByPk(adminId));
+};
+
+const changeAdminPasswordService = async (adminId, { old_password, new_password }) => {
+  const admin = await Admin.findByPk(adminId);
+  if (!admin) throw new Error("ADMIN_NOT_FOUND");
+
+  const isMatch = await comparePassword(old_password, admin.password);
+  if (!isMatch) throw new Error("INVALID_OLD_PASSWORD");
+
+  await Admin.update({ password: await hashPassword(new_password) }, { where: { id: adminId } });
+  return true;
+};
+
+// =========================
+// ADMIN ACCOUNT MANAGEMENT (super admin only — enforced at the route layer)
+// =========================
+const getAdminsService = async (query) => {
+  const { page, limit, offset } = getPagination(query);
+
+  const { count, rows } = await Admin.findAndCountAll({
+    limit,
+    offset,
+    order: [["id", "DESC"]],
+  });
+
+  return { admins: rows.map(publicAdmin), meta: buildPaginationMeta({ count, page, limit }) };
+};
+
+const createAdminService = async ({ name, email, password, is_admin }) => {
+  const existing = await Admin.findOne({ where: { email } });
+  if (existing) throw new Error("EMAIL_EXISTS");
+
+  const admin = await Admin.create({
+    name,
+    email,
+    password: await hashPassword(password),
+    is_admin: is_admin ? 1 : 0,
+    is_active: 1,
+  });
+
+  return publicAdmin(admin);
+};
+
+const toggleAdminStatusService = async (adminId) => {
+  const admin = await Admin.findByPk(adminId);
+  if (!admin) throw new Error("ADMIN_NOT_FOUND");
+
+  const newStatus = Number(admin.is_active) === 1 ? 0 : 1;
+  await Admin.update({ is_active: newStatus }, { where: { id: adminId } });
+  return publicAdmin(await Admin.findByPk(adminId));
+};
+
+const deleteAdminService = async (requestingAdminId, targetAdminId) => {
+  if (Number(requestingAdminId) === Number(targetAdminId)) {
+    throw new Error("CANNOT_DELETE_SELF");
+  }
+
+  const admin = await Admin.findByPk(targetAdminId);
+  if (!admin) throw new Error("ADMIN_NOT_FOUND");
+
+  await Admin.destroy({ where: { id: targetAdminId } });
+  return true;
 };
 
 export {
@@ -204,4 +301,11 @@ export {
   getProfileService,
   updateProfileService,
   adminLoginService,
+  getAdminProfileService,
+  updateAdminProfileService,
+  changeAdminPasswordService,
+  getAdminsService,
+  createAdminService,
+  toggleAdminStatusService,
+  deleteAdminService,
 };

@@ -8,6 +8,7 @@ import MobileSlider from "../../../database/models/MobileSlider.js";
 import Product from "../../../database/models/Product.js";
 import Brand from "../../../database/models/Brand.js";
 import ProductCategory from "../../../database/models/ProductCategory.js";
+import ProductTag from "../../../database/models/ProductTag.js";
 import { successDataResponse, errorResponse } from "../../../shared/responses/apiResponse.js";
 
 const activeOrder = { where: { status: 1 }, order: [["id", "ASC"]] };
@@ -26,6 +27,7 @@ export const getHomeContent = async (req, res) => {
       onSale,
       categories,
       brands,
+      tags,
     ] = await Promise.all([
       Slide.findAll(activeOrder),
       HomeBanner.findAll(activeOrder),
@@ -53,6 +55,9 @@ export const getHomeContent = async (req, res) => {
       }),
       ProductCategory.findAll({ where: { status: 1, parent_id: 0 }, order: [["order_by", "ASC"]] }),
       Brand.findAll({ where: { status: 1 }, order: [["title", "ASC"]] }),
+      // ProductTag has no `status` column (unlike Brand/ProductCategory) —
+      // every tag is public, there's no admin-side active/inactive toggle.
+      ProductTag.findAll({ order: [["name", "ASC"]] }),
     ]);
 
     return successDataResponse(
@@ -70,6 +75,7 @@ export const getHomeContent = async (req, res) => {
         onSale,
         categories,
         brands,
+        tags,
       },
       200
     );

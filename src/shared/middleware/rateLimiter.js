@@ -26,3 +26,15 @@ export const authLimiter = rateLimit({
   legacyHeaders: false,
   handler,
 });
+
+// =====================================
+// PUBLIC FORM LIMITER (exchange requests, contact-us, newsletter signup —
+// unauthenticated write endpoints with no other abuse protection)
+// =====================================
+export const publicFormLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler,
+});
