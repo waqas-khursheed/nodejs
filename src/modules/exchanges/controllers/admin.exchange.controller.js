@@ -2,6 +2,7 @@ import {
   getExchangesService,
   getExchangeByIdService,
   markExchangeSeenService,
+  updateExchangeStatusService,
   deleteExchangeService,
 } from "../services/exchange.service.js";
 import { successResponse, successDataResponse } from "../../../shared/responses/apiResponse.js";
@@ -38,6 +39,16 @@ export const markExchangeSeen = async (req, res) => {
     const result = await markExchangeSeenService(req.params.id);
 
     return successDataResponse(res, "Exchange request marked as seen", result, 200);
+  } catch (error) {
+    return handleServiceError(res, error);
+  }
+};
+
+export const updateExchangeStatus = async (req, res) => {
+  try {
+    const result = await updateExchangeStatusService(req.params.id, req.body);
+
+    return successDataResponse(res, "Exchange request updated successfully", result, 200);
   } catch (error) {
     return handleServiceError(res, error);
   }

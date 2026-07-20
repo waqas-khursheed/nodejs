@@ -7,6 +7,21 @@ class Exchange extends Model {
       foreignKey: "order_id",
       as: "order",
     });
+
+    Exchange.belongsTo(models.User, {
+      foreignKey: "user_id",
+      as: "user",
+    });
+
+    Exchange.belongsTo(models.OrderDetail, {
+      foreignKey: "order_detail_id",
+      as: "orderDetail",
+    });
+
+    Exchange.belongsTo(models.Stock, {
+      foreignKey: "requested_stock_id",
+      as: "requestedStock",
+    });
   }
 
 }
@@ -20,6 +35,21 @@ Exchange.init(
     },
 
     order_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+
+    user_id: {
+      type: DataTypes.BIGINT.UNSIGNED,
+      allowNull: true,
+    },
+
+    order_detail_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+
+    requested_stock_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
@@ -93,6 +123,18 @@ Exchange.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
+    },
+
+    // 0 Pending, 1 Approved, 2 Rejected, 3 Completed.
+    status: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+
+    admin_note: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
 
     created_at: {

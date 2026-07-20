@@ -1,3 +1,4 @@
+import AssignAttrToProduct from "../../../database/models/AssignAttrToProduct.js";
 import {
   createStockRepo,
   findStockByIdRepo,
@@ -8,6 +9,25 @@ import {
 import { findProductByIdRepo } from "../../products/repositories/product.repository.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
 
+// Creating/editing a Stock row is the only place an admin picks which
+// attribute *values* (color_id/size_id/fitting_id) a variant uses — but
+// nothing previously recorded that assignment in assign_attr_to_products,
+// which is the table the storefront's variant selector actually reads
+// (backed/src/modules/products/repositories/user.product.repository.js).
+// Without this, a product could have real Stock rows with real prices/qty
+// and still show zero variant buttons to shop with. Find-or-create keeps
+// this idempotent across repeated stock edits for the same product/value.
+const syncAssignedAttributes = async (productId, stock) => {
+  const attributeItemIds = [stock.color_id, stock.size_id, stock.fitting_id].filter(Boolean);
+
+  for (const attributeItemId of attributeItemIds) {
+    await AssignAttrToProduct.findOrCreate({
+      where: { product_id: productId, attribute_id: attributeItemId },
+      defaults: { product_id: productId, attribute_id: attributeItemId, in_stock: 1, with_product: 0 },
+    });
+  }
+};
+
 export const createStockService = async (data) => {
   const { product_id } = data;
 
@@ -17,6 +37,7 @@ export const createStockService = async (data) => {
   }
 
   const stock = await createStockRepo(data);
+  await syncAssignedAttributes(product_id, stock);
   return await findStockByIdRepo(stock.id);
 };
 
@@ -60,7 +81,9 @@ export const updateStockService = async (id, data) => {
     }
   }
 
-  return await updateStockRepo(id, data);
+  const updated = await updateStockRepo(id, data);
+  await syncAssignedAttributes(data.product_id ?? stock.product_id, updated);
+  return updated;
 };
 
 export const deleteStockService = async (id) => {
