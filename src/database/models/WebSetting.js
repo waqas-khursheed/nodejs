@@ -94,6 +94,26 @@ WebSetting.init(
       allowNull: true,
     },
 
+    facebook: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+
+    instagram: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+
+    twitter: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+
+    youtube: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+
     service_for: {
       type: DataTypes.STRING(50),
       allowNull: false,

@@ -14,6 +14,7 @@ const listQuerySchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(100).default(10),
   seen: Joi.number().valid(0, 1),
+  search: Joi.string().allow(""),
 });
 
 const router = express.Router();

@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import QueryForm from "../../../database/models/QueryForm.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
 import { successResponse, successDataResponse, errorResponse } from "../../../shared/responses/apiResponse.js";
@@ -7,6 +8,12 @@ export const listQueryForms = async (req, res) => {
     const { page, limit, offset } = getPagination(req.query);
     const where = {};
     if (req.query.seen !== undefined && req.query.seen !== "") where.seen = req.query.seen;
+    if (req.query.search) {
+      where[Op.or] = [
+        { name: { [Op.like]: `%${req.query.search}%` } },
+        { email: { [Op.like]: `%${req.query.search}%` } },
+      ];
+    }
 
     const { count, rows } = await QueryForm.findAndCountAll({
       where,

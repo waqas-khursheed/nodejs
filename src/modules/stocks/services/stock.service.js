@@ -7,6 +7,7 @@ import {
   deleteStockRepo,
 } from "../repositories/stock.repository.js";
 import { findProductByIdRepo } from "../../products/repositories/product.repository.js";
+import { notifyStockAlertsService } from "../../products/services/stockAlertNotifier.service.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
 
 // Creating/editing a Stock row is the only place an admin picks which
@@ -81,8 +82,14 @@ export const updateStockService = async (id, data) => {
     }
   }
 
+  const wasOutOfStock = stock.stock_qty === 0;
   const updated = await updateStockRepo(id, data);
   await syncAssignedAttributes(data.product_id ?? stock.product_id, updated);
+
+  if (wasOutOfStock && updated.stock_qty > 0) {
+    notifyStockAlertsService(updated.product_id, updated.id).catch(() => {});
+  }
+
   return updated;
 };
 

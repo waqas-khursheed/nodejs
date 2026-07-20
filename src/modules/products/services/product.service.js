@@ -18,6 +18,7 @@ import { findBrandByIdRepo } from "../../brands/repositories/brand.repository.js
 import { slugify } from "../../../shared/helpers/helpers.js";
 import { deleteUploadedFile, scheduleImageReplacement } from "../../../shared/utils/fileUtils.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
+import { notifyStockAlertsService } from "./stockAlertNotifier.service.js";
 
 const validateCategoryIds = async (categoryIds) => {
   if (!categoryIds || categoryIds.length === 0) return;
@@ -169,6 +170,8 @@ export const updateProductService = async (id, data) => {
     scheduleImageReplacement("products", product.hovered_image, hovered_image);
   }
 
+  const wasOutOfStock = product.quantity === 0;
+
   await sequelize.transaction(async (transaction) => {
     await updateProductFieldsRepo(id, updateData, { transaction });
 
@@ -180,6 +183,10 @@ export const updateProductService = async (id, data) => {
       await addProductGalleryImagesRepo(id, gallery, { transaction });
     }
   });
+
+  if (wasOutOfStock && updateData.quantity > 0) {
+    notifyStockAlertsService(id, null).catch(() => {});
+  }
 
   return await findProductByIdRepo(id, true);
 };

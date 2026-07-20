@@ -5,7 +5,9 @@ import {
   findRelatedProductsRepo,
   findStockForVariationRepo,
 } from "../repositories/user.product.repository.js";
+import { createStockAlertRepo } from "../repositories/stockAlert.repository.js";
 import Review from "../../../database/models/Review.js";
+import Stock from "../../../database/models/Stock.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
 import { buildProductSearchCondition } from "../../../shared/utils/fullTextSearch.js";
 
@@ -102,4 +104,17 @@ export const checkStockService = async (slug, variation) => {
   if (!stock) throw new Error("STOCK_NOT_FOUND");
 
   return stock;
+};
+
+export const createStockAlertService = async (slug, data) => {
+  const product = await findActiveProductBySlugRepo(slug);
+  if (!product) throw new Error("PRODUCT_NOT_FOUND");
+
+  if (data.stock_id) {
+    const stock = await Stock.findOne({ where: { id: data.stock_id, product_id: product.id } });
+    if (!stock) throw new Error("STOCK_NOT_FOUND");
+  }
+
+  await createStockAlertRepo({ product_id: product.id, stock_id: data.stock_id || null, email: data.email });
+  return { subscribed: true };
 };

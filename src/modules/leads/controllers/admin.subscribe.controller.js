@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import Subscribe from "../../../database/models/Subscribe.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
 import { successResponse, successDataResponse, errorResponse } from "../../../shared/responses/apiResponse.js";
@@ -7,6 +8,7 @@ export const listSubscribes = async (req, res) => {
     const { page, limit, offset } = getPagination(req.query);
     const where = {};
     if (req.query.status !== undefined && req.query.status !== "") where.status = req.query.status;
+    if (req.query.search) where.email = { [Op.like]: `%${req.query.search}%` };
 
     const { count, rows } = await Subscribe.findAndCountAll({
       where,

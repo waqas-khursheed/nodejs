@@ -25,6 +25,11 @@ export const getFaqsService = async (query) => {
     where.category_id = query.category_id;
   }
 
+  if (query.search) {
+    const { Op } = await import("sequelize");
+    where.question = { [Op.like]: `%${query.search}%` };
+  }
+
   const { count, rows } = await findAllFaqsRepo({ where, limit, offset });
 
   return { faqs: rows, meta: buildPaginationMeta({ count, page, limit }) };

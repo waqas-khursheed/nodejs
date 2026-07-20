@@ -3,6 +3,7 @@ import {
   getProductBySlugService,
   getRelatedProductsService,
   checkStockService,
+  createStockAlertService,
 } from "../services/user.product.service.js";
 import { successDataResponse
 } from "../../../shared/responses/apiResponse.js";
@@ -47,6 +48,15 @@ export const checkStock = async (req, res) => {
   try {
     const result = await checkStockService(req.params.slug, req.query);
     return successDataResponse(res, "Stock fetched successfully", result, 200);
+  } catch (error) {
+    return handleServiceError(res, error);
+  }
+};
+
+export const subscribeStockAlert = async (req, res) => {
+  try {
+    const result = await createStockAlertService(req.params.slug, req.body);
+    return successDataResponse(res, "We'll email you when this is back in stock", result, 201);
   } catch (error) {
     return handleServiceError(res, error);
   }

@@ -50,6 +50,7 @@ import SizeChart from "./SizeChart.js";
 import Slide from "./Slide.js";
 import State from "./State.js";
 import Stock from "./Stock.js";
+import StockAlert from "./StockAlert.js";
 import StockItem from "./StockItem.js";
 import Subscribe from "./Subscribe.js";
 import UsedCoupon from "./UsedCoupon.js";
@@ -112,6 +113,7 @@ const models = {
   Slide,
   State,
   Stock,
+  StockAlert,
   StockItem,
   Subscribe,
   UsedCoupon,
@@ -182,6 +184,7 @@ export {
   Slide,
   State,
   Stock,
+  StockAlert,
   StockItem,
   Subscribe,
   UsedCoupon,

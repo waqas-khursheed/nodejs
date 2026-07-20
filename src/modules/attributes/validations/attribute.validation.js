@@ -49,4 +49,5 @@ export const attributeItemListQuerySchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(100).default(10),
   attribute_id: Joi.number().integer().positive(),
+  search: Joi.string().allow(""),
 });

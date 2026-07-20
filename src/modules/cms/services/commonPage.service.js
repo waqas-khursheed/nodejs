@@ -27,6 +27,11 @@ export const getCommonPagesService = async (query) => {
   if (query.status !== undefined && query.status !== "") where.status = query.status;
   if (query.page_name) where.page_name = query.page_name;
 
+  if (query.search) {
+    const { Op } = await import("sequelize");
+    where.title = { [Op.like]: `%${query.search}%` };
+  }
+
   const { count, rows } = await findAllCommonPagesRepo({ where, limit, offset });
 
   return { pages: rows, meta: buildPaginationMeta({ count, page, limit }) };

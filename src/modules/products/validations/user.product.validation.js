@@ -28,3 +28,8 @@ export const stockCheckQuerySchema = Joi.object({
   color_id: Joi.number().integer().positive(),
   fitting_id: Joi.number().integer().positive(),
 });
+
+export const createStockAlertSchema = Joi.object({
+  email: Joi.string().trim().email().required(),
+  stock_id: Joi.number().integer().positive().allow(null),
+});

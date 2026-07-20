@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import User from "../../../database/models/User.js";
 import Admin from "../../../database/models/Admin.js";
 import ResetPasswordCode from "../../../database/models/ResetPasswordCode.js";
@@ -246,8 +247,17 @@ const changeAdminPasswordService = async (adminId, { old_password, new_password 
 // =========================
 const getAdminsService = async (query) => {
   const { page, limit, offset } = getPagination(query);
+  const where = {};
+
+  if (query.search) {
+    where[Op.or] = [
+      { name: { [Op.like]: `%${query.search}%` } },
+      { email: { [Op.like]: `%${query.search}%` } },
+    ];
+  }
 
   const { count, rows } = await Admin.findAndCountAll({
+    where,
     limit,
     offset,
     order: [["id", "DESC"]],

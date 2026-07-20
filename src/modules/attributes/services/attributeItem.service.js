@@ -36,6 +36,11 @@ export const getAttributeItemsService = async (query) => {
     where.attribute_id = query.attribute_id;
   }
 
+  if (query.search) {
+    const { Op } = await import("sequelize");
+    where.title = { [Op.like]: `%${query.search}%` };
+  }
+
   const { count, rows } = await findAllAttributeItemsRepo({ where, limit, offset });
 
   return {

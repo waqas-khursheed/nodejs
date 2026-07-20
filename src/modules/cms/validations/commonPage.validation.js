@@ -9,6 +9,7 @@ export const commonPageListQuerySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(10),
   status: Joi.number().valid(0, 1),
   page_name: Joi.string().allow(""),
+  search: Joi.string().allow(""),
 });
 
 export const createCommonPageSchema = Joi.object({
