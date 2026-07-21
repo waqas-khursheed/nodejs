@@ -8,7 +8,6 @@ import { updateWebSettingSchema } from "../validations/webSetting.validation.js"
 const logoUploadFields = upload.fields([
   { name: "main_logo", maxCount: 1 },
   { name: "fav_icon", maxCount: 1 },
-  { name: "payment_logo", maxCount: 1 },
 ]);
 
 const router = express.Router();

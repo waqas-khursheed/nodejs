@@ -11,7 +11,7 @@ const errorMap = {
   NOT_CONFIGURED: { code: 404, msg: "Web settings have not been configured yet" },
   REQUIRED_FIELDS_MISSING: {
     code: 422,
-    msg: "delivery_start_time, delivery_end_time, delivery_days_time_mod and footer_payment_logo_mod are required for the initial setup",
+    msg: "delivery_start_time, delivery_end_time and delivery_days_time_mod are required for the initial setup",
   },
 };
 
@@ -31,7 +31,7 @@ export const updateWebSetting = async (req, res) => {
     const data = { ...req.body };
 
     if (req.files) {
-      for (const field of ["main_logo", "fav_icon", "payment_logo"]) {
+      for (const field of ["main_logo", "fav_icon"]) {
         if (req.files[field]?.[0]) data[field] = req.files[field][0].filename;
       }
     }

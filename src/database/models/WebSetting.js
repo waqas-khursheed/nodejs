@@ -69,31 +69,6 @@ WebSetting.init(
       allowNull: true,
     },
 
-    footer_widget_1: {
-      type: DataTypes.STRING(25),
-      allowNull: true,
-    },
-
-    footer_widget_2: {
-      type: DataTypes.STRING(25),
-      allowNull: true,
-    },
-
-    footer_widget_3: {
-      type: DataTypes.STRING(25),
-      allowNull: true,
-    },
-
-    footer_widget_4: {
-      type: DataTypes.STRING(25),
-      allowNull: true,
-    },
-
-    payment_logo: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-
     facebook: {
       type: DataTypes.TEXT,
       allowNull: true,
@@ -112,18 +87,6 @@ WebSetting.init(
     youtube: {
       type: DataTypes.TEXT,
       allowNull: true,
-    },
-
-    service_for: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-      defaultValue: "both",
-    },
-
-    dynamic_module_name: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-      defaultValue: "Brand",
     },
 
     delivery_days: {
@@ -160,11 +123,6 @@ WebSetting.init(
     },
 
     delivery_days_time_mod: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-
-    footer_payment_logo_mod: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
