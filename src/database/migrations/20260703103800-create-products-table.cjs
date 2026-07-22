@@ -204,9 +204,36 @@ module.exports = {
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
       },
     });
+
+    await queryInterface.addIndex('products', {
+      fields: ['sku'],
+      unique: true,
+      name: 'products_sku_unique',
+    });
+
+    await queryInterface.addIndex('products', {
+      fields: [{ name: 'slug', length: 191 }],
+      name: 'products_slug_idx',
+    });
+
+    await queryInterface.addIndex('products', {
+      fields: ['status'],
+      name: 'products_status_idx',
+    });
+
+    await queryInterface.addIndex('products', {
+      fields: ['brand_id'],
+      name: 'products_brand_id_idx',
+    });
+
+    // FULLTEXT indexes aren't supported by queryInterface.addIndex in this
+    // MySQL dialect version — added via raw SQL, same as the original migration.
+    await queryInterface.sequelize.query(
+      "ALTER TABLE `products` ADD FULLTEXT INDEX `products_fulltext_search` (`title`, `short_desc`)"
+    );
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('products');
   },
 };

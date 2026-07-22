@@ -78,10 +78,31 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
+
+      created_at: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
+
+      updated_at: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
+    });
+
+    await queryInterface.addIndex('product_categories', {
+      fields: [{ name: 'slug', length: 191 }],
+      unique: true,
+      name: 'product_categories_slug_unique',
+    });
+
+    await queryInterface.addIndex('product_categories', {
+      fields: ['parent_id', 'status'],
+      name: 'product_categories_parent_status_idx',
     });
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('product_categories');
   },
 };

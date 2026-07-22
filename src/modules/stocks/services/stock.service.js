@@ -36,6 +36,13 @@ export const createStockService = async (data) => {
   if (!product) {
     throw new Error("PRODUCT_NOT_FOUND");
   }
+  // Only variant products (is_variation=1) are ever read from `stocks` at
+  // checkout/display time (see checkout.service.js's decrementStockOrProduct
+  // and the storefront's ProductPurchasePanel) — a Stock row on a plain
+  // product would save successfully but never be seen by a shopper.
+  if (!product.is_variation) {
+    throw new Error("PRODUCT_NOT_VARIANT");
+  }
 
   const stock = await createStockRepo(data);
   await syncAssignedAttributes(product_id, stock);
@@ -50,7 +57,7 @@ export const getStocksService = async (query) => {
     where.product_id = query.product_id;
   }
 
-  const { count, rows } = await findAllStocksRepo({ where, limit, offset });
+  const { count, rows } = await findAllStocksRepo({ where, limit, offset, search: query.search });
 
   return {
     stocks: rows,
@@ -79,6 +86,9 @@ export const updateStockService = async (id, data) => {
     const product = await findProductByIdRepo(data.product_id);
     if (!product) {
       throw new Error("PRODUCT_NOT_FOUND");
+    }
+    if (!product.is_variation) {
+      throw new Error("PRODUCT_NOT_VARIANT");
     }
   }
 

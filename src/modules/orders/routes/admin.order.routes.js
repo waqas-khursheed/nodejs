@@ -6,6 +6,7 @@ import {
   updateOrderPaymentStatus,
   markOrderSeen,
   deleteOrder,
+  bulkDeleteOrders,
 } from "../controllers/admin.order.controller.js";
 import { adminAuthMiddleware } from "../../../shared/middleware/admin.middleware.js";
 import { validate } from "../../../shared/middleware/validate.middleware.js";
@@ -16,6 +17,7 @@ import {
   orderStatusSchema,
   orderPaymentStatusSchema,
 } from "../validations/order.validation.js";
+import { bulkDeleteSchema } from "../../../shared/validations/bulkDelete.validation.js";
 
 const router = express.Router();
 
@@ -47,5 +49,7 @@ router.patch(
 );
 
 router.delete("/:id", adminAuthMiddleware, validateParams(orderIdParamSchema), deleteOrder);
+
+router.post("/bulk-delete", adminAuthMiddleware, validate(bulkDeleteSchema), bulkDeleteOrders);
 
 export default router;

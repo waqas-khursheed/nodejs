@@ -10,6 +10,10 @@ import { createErrorHandler } from "../../../shared/utils/controllerErrorHandler
 
 const errorMap = {
   EXCHANGE_NOT_FOUND: { code: 404, msg: "Exchange request not found" },
+  REQUESTED_STOCK_OUT_OF_STOCK: {
+    code: 409,
+    msg: "The requested replacement variant sold out — pick a different variant or refund/reject the request",
+  },
 };
 
 const handleServiceError = createErrorHandler(errorMap);

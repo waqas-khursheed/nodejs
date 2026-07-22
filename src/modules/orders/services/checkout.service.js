@@ -23,6 +23,7 @@ import {
 } from "../repositories/user.order.repository.js";
 import { updateOrderFieldsRepo, createOrderStatusHistoryRepo } from "../repositories/order.repository.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
+import { restoreStockForOrderDetails } from "./orderStock.helper.js";
 
 const round2 = (n) => Number(n.toFixed(2));
 
@@ -284,37 +285,7 @@ export const cancelOrderService = async (userId, orderId) => {
   if (order.status !== CANCELLABLE_STATUS) throw new Error("ORDER_NOT_CANCELLABLE");
 
   await sequelize.transaction(async (transaction) => {
-    for (const detail of order.orderDetails) {
-      // Reconstruct which Stock row (if any) this line came from — OrderDetail
-      // doesn't keep the stock_id itself, only the attribute combo it was sold
-      // under, so match it back the same way it was matched at checkout.
-      const stock = await Stock.findOne({
-        where: {
-          product_id: detail.product_id,
-          color_id: detail.color_id,
-          size_id: detail.size_id,
-          fitting_id: detail.fitting_id,
-        },
-        transaction,
-      });
-
-      if (stock) {
-        // NULL stock_qty means "untracked/unlimited" — NULL + N is still NULL
-        // in SQL, so this is naturally a no-op for those rows.
-        await Stock.update(
-          { stock_qty: sequelize.literal(`stock_qty + ${Number(detail.quantity)}`) },
-          { where: { id: stock.id }, transaction }
-        );
-      } else {
-        await Product.update(
-          {
-            quantity: sequelize.literal(`quantity + ${Number(detail.quantity)}`),
-            sold: sequelize.literal(`GREATEST(sold - ${Number(detail.quantity)}, 0)`),
-          },
-          { where: { id: detail.product_id }, transaction }
-        );
-      }
-    }
+    await restoreStockForOrderDetails(order.orderDetails, transaction);
 
     await updateOrderFieldsRepo(orderId, { status: CANCELLED_STATUS }, { transaction });
     await createOrderStatusHistoryRepo(

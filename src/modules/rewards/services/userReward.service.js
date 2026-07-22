@@ -12,7 +12,7 @@ export const getUserRewardsService = async (query) => {
     where.user_id = query.user_id;
   }
 
-  const { count, rows } = await findAllUserRewardsRepo({ where, limit, offset });
+  const { count, rows } = await findAllUserRewardsRepo({ where, limit, offset, search: query.search });
 
   return { userRewards: rows, meta: buildPaginationMeta({ count, page, limit }) };
 };

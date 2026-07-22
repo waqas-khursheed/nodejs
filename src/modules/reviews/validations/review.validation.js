@@ -9,6 +9,7 @@ export const reviewListQuerySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(10),
   status: Joi.number().valid(0, 1, 2),
   product_id: Joi.number().integer().positive(),
+  search: Joi.string().allow(""),
 });
 
 export const reviewStatusSchema = Joi.object({

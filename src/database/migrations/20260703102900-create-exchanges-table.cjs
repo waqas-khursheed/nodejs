@@ -80,6 +80,17 @@ module.exports = {
         defaultValue: 0,
       },
 
+      status: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+
+      admin_note: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
@@ -90,10 +101,53 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: true,
       },
+
+      order_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+
+        references: {
+          model: 'orders',
+          key: 'id',
+        },
+
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
+      },
+
+      user_id: {
+        type: Sequelize.BIGINT.UNSIGNED,
+        allowNull: true,
+      },
+
+      order_detail_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
+
+      requested_stock_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
+    });
+
+    await queryInterface.addIndex('exchanges', {
+      fields: ['order_id'],
+      name: 'exchanges_order_id_idx',
+    });
+
+    await queryInterface.addIndex('exchanges', {
+      fields: ['user_id'],
+      name: 'exchanges_user_id_idx',
+    });
+
+    await queryInterface.addIndex('exchanges', {
+      fields: ['order_detail_id'],
+      name: 'exchanges_order_detail_id_idx',
     });
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('exchanges');
   },
 };

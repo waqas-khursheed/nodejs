@@ -35,9 +35,19 @@ module.exports = {
         onDelete: 'CASCADE',
       },
     });
+
+    await queryInterface.addIndex('assign_cat_to_products', {
+      fields: ['product_id'],
+      name: 'assign_cat_to_products_product_id_idx',
+    });
+
+    await queryInterface.addIndex('assign_cat_to_products', {
+      fields: ['category_id'],
+      name: 'assign_cat_to_products_category_id_idx',
+    });
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('assign_cat_to_products');
   },
 };

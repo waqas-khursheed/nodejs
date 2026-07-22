@@ -1,4 +1,4 @@
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import Product from "../../../database/models/Product.js";
 import Brand from "../../../database/models/Brand.js";
 import ProductGallery from "../../../database/models/ProductGallery.js";
@@ -42,6 +42,22 @@ export const findAllProductsRepo = async ({ where, limit, offset }) => {
     offset,
     distinct: true,
     include: [{ model: Brand, as: "brand" }],
+    // `quantity` only means anything for non-variant products — for
+    // `is_variation` products the real count lives per-combination in
+    // `stocks`, so the admin list needs an honest aggregate instead of the
+    // always-0 `quantity` column (see backed/src/modules/stocks). NULL
+    // `stock_qty` rows mean "untracked/unlimited" and are excluded from the
+    // SUM by MySQL automatically, same convention as checkout.service.js.
+    attributes: {
+      include: [
+        [
+          Sequelize.literal(
+            "(SELECT SUM(stock_qty) FROM stocks WHERE stocks.product_id = Product.id)"
+          ),
+          "variant_stock_total",
+        ],
+      ],
+    },
     order: [["id", "DESC"]],
   });
 };

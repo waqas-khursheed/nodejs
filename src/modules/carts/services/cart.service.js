@@ -102,7 +102,12 @@ export const getCartService = async (owner) => {
     const lineTotal = Number((unitPrice * item.quantity).toFixed(2));
     subTotal += lineTotal;
 
-    return { ...item.toJSON(), unitPrice, lineTotal };
+    // null means untracked/unlimited stock — same convention as
+    // Stock.stock_qty and Product.quantity individually. Lets the frontend
+    // cart page cap its quantity stepper without re-deriving this itself.
+    const remainingQty = stock ? stock.stock_qty : item.product.quantity;
+
+    return { ...item.toJSON(), unitPrice, lineTotal, remainingQty };
   });
 
   return { items: cart, subTotal: Number(subTotal.toFixed(2)) };

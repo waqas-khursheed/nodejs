@@ -5,6 +5,7 @@ import {
   updatePaymentStatusService,
   markOrderSeenService,
   deleteOrderService,
+  bulkDeleteOrdersService,
 } from "../services/order.service.js";
 import {
   successResponse,
@@ -74,6 +75,16 @@ export const deleteOrder = async (req, res) => {
     await deleteOrderService(req.params.id);
 
     return successResponse(res, "Order deleted successfully", 200);
+  } catch (error) {
+    return handleServiceError(res, error);
+  }
+};
+
+export const bulkDeleteOrders = async (req, res) => {
+  try {
+    const result = await bulkDeleteOrdersService(req.body.ids);
+
+    return successDataResponse(res, "Orders deleted successfully", result, 200);
   } catch (error) {
     return handleServiceError(res, error);
   }

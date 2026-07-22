@@ -90,6 +90,7 @@ export const getExchangesService = async (query) => {
 
   if (query.seen !== undefined && query.seen !== "") where.seen = query.seen;
   if (query.status !== undefined && query.status !== "") where.status = query.status;
+  if (query.search) where.customer_name = { [Op.like]: `%${query.search}%` };
 
   const { count, rows } = await findAllExchangesRepo({ where, limit, offset });
 
@@ -164,10 +165,18 @@ export const updateExchangeStatusService = async (id, { status, admin_note }) =>
       }
 
       if (exchange.requested_stock_id) {
-        await Stock.update(
+        const [affectedCount] = await Stock.update(
           { stock_qty: sequelize.literal(`GREATEST(stock_qty - 1, 0)`) },
           { where: { id: exchange.requested_stock_id, stock_qty: { [Op.gt]: 0 } }, transaction }
         );
+
+        // The requested variant sold out between the customer's request and
+        // this approval — bail out (rolling back the whole transaction,
+        // including the returned-stock credit above) instead of silently
+        // approving an exchange we can no longer fulfil.
+        if (affectedCount === 0) {
+          throw new Error("REQUESTED_STOCK_OUT_OF_STOCK");
+        }
       }
     }
 

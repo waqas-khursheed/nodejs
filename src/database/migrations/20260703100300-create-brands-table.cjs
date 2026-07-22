@@ -51,9 +51,15 @@ module.exports = {
         allowNull: false,
       },
     });
+
+    await queryInterface.addIndex('brands', {
+      fields: ['slug'],
+      unique: true,
+      name: 'brands_slug_unique',
+    });
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('brands');
   },
 };

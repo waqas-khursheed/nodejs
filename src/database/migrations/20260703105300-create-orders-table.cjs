@@ -132,10 +132,41 @@ module.exports = {
         allowNull: false,
         defaultValue: 0,
       },
+
+      deleted_at: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
+
+      updated_at: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
+    });
+
+    await queryInterface.addIndex('orders', {
+      fields: ['user_id'],
+      name: 'orders_user_id_idx',
+    });
+
+    await queryInterface.addIndex('orders', {
+      fields: ['status'],
+      name: 'orders_status_idx',
+    });
+
+    await queryInterface.addIndex('orders', {
+      fields: ['payment_status'],
+      name: 'orders_payment_status_idx',
+    });
+
+    await queryInterface.addIndex('orders', {
+      fields: ['order_number'],
+      unique: true,
+      name: 'orders_order_number_unique',
     });
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('orders');
   },
 };

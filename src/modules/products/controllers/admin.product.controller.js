@@ -5,6 +5,7 @@ import {
   updateProductService,
   toggleProductStatusService,
   deleteProductService,
+  bulkDeleteProductsService,
   deleteProductGalleryImageService,
 } from "../services/product.service.js";
 import {
@@ -124,6 +125,16 @@ export const deleteProduct = async (req, res) => {
     await deleteProductService(req.params.id);
 
     return successResponse(res, "Product deleted successfully", 200);
+  } catch (error) {
+    return handleServiceError(res, error);
+  }
+};
+
+export const bulkDeleteProducts = async (req, res) => {
+  try {
+    const result = await bulkDeleteProductsService(req.body.ids);
+
+    return successDataResponse(res, "Products deleted successfully", result, 200);
   } catch (error) {
     return handleServiceError(res, error);
   }

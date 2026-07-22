@@ -64,43 +64,6 @@ module.exports = {
         allowNull: true,
       },
 
-      footer_widget_1: {
-        type: Sequelize.STRING(25),
-        allowNull: true,
-      },
-
-      footer_widget_2: {
-        type: Sequelize.STRING(25),
-        allowNull: true,
-      },
-
-      footer_widget_3: {
-        type: Sequelize.STRING(25),
-        allowNull: true,
-      },
-
-      footer_widget_4: {
-        type: Sequelize.STRING(25),
-        allowNull: true,
-      },
-
-      payment_logo: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      },
-
-      service_for: {
-        type: Sequelize.STRING(50),
-        allowNull: false,
-        defaultValue: "both",
-      },
-
-      dynamic_module_name: {
-        type: Sequelize.STRING(50),
-        allowNull: false,
-        defaultValue: "Brand",
-      },
-
       delivery_days: {
         type: Sequelize.TEXT,
         allowNull: true,
@@ -139,19 +102,34 @@ module.exports = {
         allowNull: false,
       },
 
-      footer_payment_logo_mod: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
+      updated_at: {
+        type: Sequelize.DATE,
+        allowNull: true,
       },
 
-      update_at: {
-        type: Sequelize.DATE,
+      facebook: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+
+      instagram: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+
+      twitter: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+
+      youtube: {
+        type: Sequelize.TEXT,
         allowNull: true,
       },
     });
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('web_settings');
   },
 };

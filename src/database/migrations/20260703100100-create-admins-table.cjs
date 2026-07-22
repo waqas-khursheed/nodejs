@@ -34,10 +34,16 @@ module.exports = {
         type: Sequelize.INTEGER,
         defaultValue: 1,
       },
+
+      is_active: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        defaultValue: 1,
+      },
     });
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('admins');
   },
 };

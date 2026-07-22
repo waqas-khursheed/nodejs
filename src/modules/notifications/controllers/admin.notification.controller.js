@@ -1,94 +1,65 @@
-import Notification from "../../../database/models/Notification.js";
-import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
-import { successResponse, successDataResponse, errorResponse } from "../../../shared/responses/apiResponse.js";
+import {
+  getNotificationsService,
+  getNotificationByIdService,
+  markNotificationSeenService,
+  markAllNotificationsSeenService,
+  deleteNotificationService,
+} from "../services/notification.service.js";
+import { successResponse, successDataResponse } from "../../../shared/responses/apiResponse.js";
+import { createErrorHandler } from "../../../shared/utils/controllerErrorHandler.js";
+
+const errorMap = {
+  NOTIFICATION_NOT_FOUND: { code: 404, msg: "Notification not found" },
+};
+
+const handleServiceError = createErrorHandler(errorMap);
 
 export const listNotifications = async (req, res) => {
   try {
-    const { page, limit, offset } = getPagination(req.query);
-    const where = {};
-    if (req.query.seen !== undefined && req.query.seen !== "") where.seen = req.query.seen;
-    if (req.query.table_name) where.table_name = req.query.table_name;
+    const result = await getNotificationsService(req.query);
 
-    const { count, rows } = await Notification.findAndCountAll({
-      where,
-      limit,
-      offset,
-      order: [["id", "DESC"]],
-    });
-
-    return successDataResponse(
-      res,
-      "Notifications fetched successfully",
-      { notifications: rows, meta: buildPaginationMeta({ count, page, limit }) },
-      200
-    );
+    return successDataResponse(res, "Notifications fetched successfully", result, 200);
   } catch (error) {
-    return errorResponse(
-      res,
-      process.env.NODE_ENV === "development" ? error.message : "Internal Server Error",
-      500
-    );
+    return handleServiceError(res, error);
   }
 };
 
 export const getNotification = async (req, res) => {
   try {
-    const row = await Notification.findByPk(req.params.id);
-    if (!row) return errorResponse(res, "Notification not found", 404);
+    const result = await getNotificationByIdService(req.params.id);
 
-    return successDataResponse(res, "Notification fetched successfully", row, 200);
+    return successDataResponse(res, "Notification fetched successfully", result, 200);
   } catch (error) {
-    return errorResponse(
-      res,
-      process.env.NODE_ENV === "development" ? error.message : "Internal Server Error",
-      500
-    );
+    return handleServiceError(res, error);
   }
 };
 
 export const markNotificationSeen = async (req, res) => {
   try {
-    const row = await Notification.findByPk(req.params.id);
-    if (!row) return errorResponse(res, "Notification not found", 404);
+    const result = await markNotificationSeenService(req.params.id);
 
-    await Notification.update({ seen: 1 }, { where: { id: req.params.id } });
-    const updated = await Notification.findByPk(req.params.id);
-
-    return successDataResponse(res, "Notification marked as seen", updated, 200);
+    return successDataResponse(res, "Notification marked as seen", result, 200);
   } catch (error) {
-    return errorResponse(
-      res,
-      process.env.NODE_ENV === "development" ? error.message : "Internal Server Error",
-      500
-    );
+    return handleServiceError(res, error);
   }
 };
 
 export const markAllNotificationsSeen = async (req, res) => {
   try {
-    await Notification.update({ seen: 1 }, { where: { seen: 0 } });
+    await markAllNotificationsSeenService();
+
     return successResponse(res, "All notifications marked as seen", 200);
   } catch (error) {
-    return errorResponse(
-      res,
-      process.env.NODE_ENV === "development" ? error.message : "Internal Server Error",
-      500
-    );
+    return handleServiceError(res, error);
   }
 };
 
 export const deleteNotification = async (req, res) => {
   try {
-    const row = await Notification.findByPk(req.params.id);
-    if (!row) return errorResponse(res, "Notification not found", 404);
+    await deleteNotificationService(req.params.id);
 
-    await Notification.destroy({ where: { id: req.params.id } });
     return successResponse(res, "Notification deleted successfully", 200);
   } catch (error) {
-    return errorResponse(
-      res,
-      process.env.NODE_ENV === "development" ? error.message : "Internal Server Error",
-      500
-    );
+    return handleServiceError(res, error);
   }
 };

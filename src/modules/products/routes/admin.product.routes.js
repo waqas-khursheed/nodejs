@@ -6,6 +6,7 @@ import {
   updateProduct,
   toggleProductStatus,
   deleteProduct,
+  bulkDeleteProducts,
   deleteProductGalleryImage,
 } from "../controllers/admin.product.controller.js";
 import { adminAuthMiddleware } from "../../../shared/middleware/admin.middleware.js";
@@ -19,6 +20,7 @@ import {
   galleryIdParamSchema,
   productListQuerySchema,
 } from "../validations/product.validation.js";
+import { bulkDeleteSchema } from "../../../shared/validations/bulkDelete.validation.js";
 
 const router = express.Router();
 
@@ -57,6 +59,8 @@ router.put(
 router.patch("/:id/status", adminAuthMiddleware, validateParams(productIdParamSchema), toggleProductStatus);
 
 router.delete("/:id", adminAuthMiddleware, validateParams(productIdParamSchema), deleteProduct);
+
+router.post("/bulk-delete", adminAuthMiddleware, validate(bulkDeleteSchema), bulkDeleteProducts);
 
 router.delete(
   "/gallery/:galleryId",

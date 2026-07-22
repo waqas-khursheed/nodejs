@@ -46,9 +46,14 @@ module.exports = {
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
     });
+
+    await queryInterface.addIndex('wishlists', {
+      fields: ['user_id', 'product_id'],
+      name: 'wishlists_user_product_idx',
+    });
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('wishlists');
   },
 };

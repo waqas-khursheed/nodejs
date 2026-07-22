@@ -46,9 +46,15 @@ module.exports = {
         allowNull: true,
       },
     });
+
+    await queryInterface.addIndex('used_coupons', {
+      fields: ['user_id', 'coupon_id'],
+      unique: true,
+      name: 'used_coupons_user_coupon_unique',
+    });
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('used_coupons');
   },
 };

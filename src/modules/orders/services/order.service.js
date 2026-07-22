@@ -9,6 +9,14 @@ import {
   deleteOrderRepo,
 } from "../repositories/order.repository.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
+import { restoreStockForOrderDetails } from "./orderStock.helper.js";
+import { bulkDelete } from "../../../shared/utils/bulkDelete.js";
+
+// Statuses that mean "this order's items are back in inventory" — see
+// frontend_admin/src/types/order.ts ORDER_STATUS_LABELS for the full map.
+const CANCELLED_STATUS = 5;
+const RETURNED_STATUS = 6;
+const STOCK_RESTORING_STATUSES = [CANCELLED_STATUS, RETURNED_STATUS];
 
 export const getOrdersService = async (query) => {
   const { page, limit, offset } = getPagination(query);
@@ -62,7 +70,30 @@ const updateFieldWithHistory = async (id, field, newValue, adminId) => {
 };
 
 export const updateOrderStatusService = async (id, status, adminId) => {
-  return await updateFieldWithHistory(id, "status", status, adminId);
+  const newStatus = Number(status);
+  const restoresStock = STOCK_RESTORING_STATUSES.includes(newStatus);
+
+  // Only need the order-detail lines loaded when we're actually about to
+  // restore stock — every other status change stays on the cheap lookup.
+  const order = await findOrderByIdRepo(id, restoresStock);
+  if (!order) throw new Error("ORDER_NOT_FOUND");
+
+  const fromValue = order.status;
+  const alreadyRestored = STOCK_RESTORING_STATUSES.includes(fromValue);
+
+  await sequelize.transaction(async (transaction) => {
+    if (restoresStock && !alreadyRestored) {
+      await restoreStockForOrderDetails(order.orderDetails, transaction);
+    }
+
+    await updateOrderFieldsRepo(id, { status: newStatus }, { transaction });
+    await createOrderStatusHistoryRepo(
+      { orderId: id, field: "status", fromValue, toValue: newStatus, changedByAdminId: adminId },
+      { transaction }
+    );
+  });
+
+  return await findOrderByIdRepo(id, true);
 };
 
 export const updatePaymentStatusService = async (id, payment_status, adminId) => {
@@ -85,4 +116,8 @@ export const deleteOrderService = async (id) => {
   // billing details, and line items are preserved for reporting/disputes.
   await deleteOrderRepo(id);
   return true;
+};
+
+export const bulkDeleteOrdersService = async (ids) => {
+  return await bulkDelete(ids, deleteOrderService);
 };

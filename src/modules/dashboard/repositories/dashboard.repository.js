@@ -7,17 +7,16 @@ import User from "../../../database/models/User.js";
 const PAID_WHERE = { payment_status: "paid" };
 
 export const getOrdersOverviewRepo = async () => {
-  const totalOrders = await Order.count();
-  const totalRevenue = await Order.sum("grand_total", { where: PAID_WHERE });
-  const pendingOrders = await Order.count({ where: { payment_status: "pending" } });
-
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
-  const todayOrders = await Order.count({ where: { created_at: { [Op.gte]: startOfDay } } });
-  const todayRevenue = await Order.sum("grand_total", {
-    where: { ...PAID_WHERE, created_at: { [Op.gte]: startOfDay } },
-  });
+  const [totalOrders, totalRevenue, pendingOrders, todayOrders, todayRevenue] = await Promise.all([
+    Order.count(),
+    Order.sum("grand_total", { where: PAID_WHERE }),
+    Order.count({ where: { payment_status: "pending" } }),
+    Order.count({ where: { created_at: { [Op.gte]: startOfDay } } }),
+    Order.sum("grand_total", { where: { ...PAID_WHERE, created_at: { [Op.gte]: startOfDay } } }),
+  ]);
 
   return {
     totalOrders,
@@ -29,9 +28,11 @@ export const getOrdersOverviewRepo = async () => {
 };
 
 export const getCatalogOverviewRepo = async () => {
-  const totalProducts = await Product.count();
-  const totalUsers = await User.count();
-  const activeUsers = await User.count({ where: { is_active: 1 } });
+  const [totalProducts, totalUsers, activeUsers] = await Promise.all([
+    Product.count(),
+    User.count(),
+    User.count({ where: { is_active: 1 } }),
+  ]);
 
   return { totalProducts, totalUsers, activeUsers };
 };

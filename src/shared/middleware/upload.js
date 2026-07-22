@@ -13,7 +13,7 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/gif",
 ]);
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = Number(process.env.MAX_UPLOAD_FILE_SIZE_MB || 5) * 1024 * 1024;
 
 // create folder helper
 const createFolderIfNotExist = (folder) => {

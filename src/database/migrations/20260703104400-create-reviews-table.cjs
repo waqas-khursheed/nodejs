@@ -60,10 +60,26 @@ module.exports = {
         type: Sequelize.INTEGER,
         defaultValue: 0,
       },
+
+      is_verified_purchase: {
+        type: Sequelize.TINYINT,
+        allowNull: false,
+        defaultValue: 0,
+      },
+    });
+
+    await queryInterface.addIndex('reviews', {
+      fields: ['product_id'],
+      name: 'reviews_product_id_idx',
+    });
+
+    await queryInterface.addIndex('reviews', {
+      fields: ['status'],
+      name: 'reviews_status_idx',
     });
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('reviews');
   },
 };

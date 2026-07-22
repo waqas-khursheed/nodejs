@@ -30,4 +30,5 @@ export const exchangeListQuerySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(10),
   seen: Joi.number().valid(0, 1),
   status: Joi.number().valid(0, 1, 2, 3),
+  search: Joi.string().allow(""),
 });

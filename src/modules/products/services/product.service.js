@@ -19,6 +19,7 @@ import { slugify } from "../../../shared/helpers/helpers.js";
 import { deleteUploadedFile, scheduleImageReplacement } from "../../../shared/utils/fileUtils.js";
 import { getPagination, buildPaginationMeta } from "../../../shared/utils/pagination.js";
 import { notifyStockAlertsService } from "./stockAlertNotifier.service.js";
+import { bulkDelete } from "../../../shared/utils/bulkDelete.js";
 
 const validateCategoryIds = async (categoryIds) => {
   if (!categoryIds || categoryIds.length === 0) return;
@@ -220,6 +221,10 @@ export const deleteProductService = async (id) => {
   );
 
   return true;
+};
+
+export const bulkDeleteProductsService = async (ids) => {
+  return await bulkDelete(ids, deleteProductService);
 };
 
 export const deleteProductGalleryImageService = async (galleryId) => {

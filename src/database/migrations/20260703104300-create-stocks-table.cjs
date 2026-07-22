@@ -89,15 +89,21 @@ module.exports = {
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
 
-      update_at: {
+      updated_at: {
         type: Sequelize.DATE,
-        allowNull: false,
+        allowNull: true,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
       },
     });
+
+    await queryInterface.addIndex('stocks', {
+      fields: ['product_id', 'color_id', 'size_id', 'fitting_id'],
+      unique: true,
+      name: 'stocks_variant_unique',
+    });
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('stocks');
   },
 };

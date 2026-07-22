@@ -34,10 +34,38 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: true,
       },
+
+      expires_at: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
+
+      usage_limit: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        comment: 'Max total redemptions across all customers. NULL = unlimited.',
+      },
+
+      used_count: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+
+      min_order_amount: {
+        type: Sequelize.DOUBLE,
+        allowNull: true,
+      },
+    });
+
+    await queryInterface.addIndex('coupons', {
+      fields: ['code'],
+      unique: true,
+      name: 'coupons_code_unique',
     });
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('coupons');
   },
 };

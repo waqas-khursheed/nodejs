@@ -19,7 +19,7 @@ export const getReviewsService = async (query) => {
     where.product_id = query.product_id;
   }
 
-  const { count, rows } = await findAllReviewsRepo({ where, limit, offset });
+  const { count, rows } = await findAllReviewsRepo({ where, limit, offset, search: query.search });
 
   return { reviews: rows, meta: buildPaginationMeta({ count, page, limit }) };
 };

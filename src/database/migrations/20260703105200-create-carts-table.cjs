@@ -86,9 +86,19 @@ module.exports = {
         defaultValue: 0,
       },
     });
+
+    await queryInterface.addIndex('carts', {
+      fields: ['user_id'],
+      name: 'carts_user_id_idx',
+    });
+
+    await queryInterface.addIndex('carts', {
+      fields: ['device_id'],
+      name: 'carts_device_id_idx',
+    });
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('carts');
   },
 };

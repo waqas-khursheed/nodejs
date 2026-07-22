@@ -9,6 +9,7 @@ const listQuerySchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(100).default(10),
   user_id: Joi.number().integer().positive(),
+  search: Joi.string().allow(""),
 });
 
 const router = express.Router();

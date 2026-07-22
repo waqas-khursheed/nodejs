@@ -14,6 +14,10 @@ import { createErrorHandler } from "../../../shared/utils/controllerErrorHandler
 
 const errorMap = {
   PRODUCT_NOT_FOUND: { code: 422, msg: "Selected product does not exist" },
+  PRODUCT_NOT_VARIANT: {
+    code: 422,
+    msg: "This product doesn't have variations enabled — turn on \"Has variations\" on the product first",
+  },
   STOCK_NOT_FOUND: { code: 404, msg: "Stock entry not found" },
 };
 
