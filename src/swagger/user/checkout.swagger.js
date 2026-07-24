@@ -13,7 +13,6 @@
  *         sub_total: { type: number, example: 79.99 }
  *         coupon_discount: { type: number, nullable: true, example: 8 }
  *         coupon_title: { type: string, nullable: true, example: "SAVE10" }
- *         rewards_discount: { type: number, example: 0 }
  *         grand_total: { type: number, example: 71.99 }
  *         payment_status: { type: string, example: "pending" }
  *         created_at: { type: string, format: date-time }
@@ -51,11 +50,10 @@
  *     tags: [User Checkout & Orders]
  *     summary: Place an order from the current cart
  *     description: >
- *       Re-validates stock, applies (in order) coupon discount → reward-points
- *       discount, computes shipping from web settings, creates the
- *       Order/OrderDetail/BillingDetail rows, decrements stock, records
- *       coupon usage and reward-point deduction, and clears the cart. Card
- *       payment is disabled for now — cash on delivery only.
+ *       Re-validates stock, applies a coupon discount if provided, computes
+ *       shipping from web settings, creates the Order/OrderDetail/BillingDetail
+ *       rows, decrements stock, records coupon usage, and clears the cart.
+ *       Card payment is disabled for now — cash on delivery only.
  *     security: [{ bearerAuth: [] }]
  *     requestBody:
  *       required: true
@@ -67,7 +65,6 @@
  *             properties:
  *               pay_method: { type: string, enum: [cod], example: "cod" }
  *               coupon_code: { type: string, example: "SAVE10" }
- *               use_reward: { type: boolean, default: false }
  *               delivery_day: { type: string, example: "Monday" }
  *               delivery_start_time: { type: string, example: "09:00:00" }
  *               delivery_end_time: { type: string, example: "18:00:00" }

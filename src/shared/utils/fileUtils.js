@@ -1,19 +1,15 @@
-import path from "path";
-import fs from "fs";
+import { storage } from "../storage/index.js";
 import { logger } from "./logger.js";
 
-const storageRoot = path.join(process.cwd(), "src", "storage", "uploads");
-
-// Deletes a previously uploaded file for a given module (best-effort, never throws).
+// Deletes a previously uploaded file for a given module (best-effort, never
+// throws, not awaited by callers — matches how this always behaved even
+// when it was a raw fs.unlink). Delegates to whichever storage driver is
+// active (local disk or S3, see shared/storage/index.js).
 export const deleteUploadedFile = (moduleName, filename) => {
   if (!filename) return;
 
-  const filePath = path.join(storageRoot, moduleName, filename);
-
-  fs.unlink(filePath, (err) => {
-    if (err && err.code !== "ENOENT") {
-      logger.error(`Failed to delete file ${filePath}`, { error: err.message });
-    }
+  storage.delete(moduleName, filename).catch((err) => {
+    logger.error(`Failed to delete uploaded file ${moduleName}/${filename}`, { error: err.message });
   });
 };
 

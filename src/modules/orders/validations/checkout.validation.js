@@ -19,7 +19,6 @@ export const checkoutSchema = Joi.object({
   pay_method: Joi.string().trim().valid("cod").default("cod"),
   billing: billingSchema.required(),
   coupon_code: Joi.string().trim().allow(""),
-  use_reward: Joi.boolean().default(false),
   delivery_day: Joi.string().trim().max(50).allow(""),
   delivery_start_time: Joi.string().trim().allow(""),
   delivery_end_time: Joi.string().trim().allow(""),

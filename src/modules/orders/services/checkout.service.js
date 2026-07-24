@@ -2,8 +2,6 @@ import { Op } from "sequelize";
 import { sequelize } from "../../../config/db.js";
 import Product from "../../../database/models/Product.js";
 import Stock from "../../../database/models/Stock.js";
-import UserReward from "../../../database/models/UserReward.js";
-import RewardSetting from "../../../database/models/RewardSetting.js";
 import WebSetting from "../../../database/models/WebSetting.js";
 import {
   findActiveCouponByCodeRepo,
@@ -41,24 +39,6 @@ const resolveCouponDiscount = async (userId, code, cart) => {
 
   const discountAmount = round2((eligibleSubtotal * coupon.percentage) / 100);
   return { discountAmount, coupon };
-};
-
-const resolveRewardsDiscount = async (userId, useReward, remaining) => {
-  if (!useReward) return { discountAmount: 0, pointsUsed: 0, userReward: null };
-
-  const userReward = await UserReward.findOne({ where: { user_id: userId } });
-  const settings = await RewardSetting.findOne({ order: [["id", "ASC"]] });
-
-  if (!userReward || !settings || userReward.rewards < settings.minimum_points) {
-    return { discountAmount: 0, pointsUsed: 0, userReward: null };
-  }
-
-  const redeemablePoints = Math.floor(userReward.rewards / settings.points) * settings.points;
-  const redeemableValue = (redeemablePoints / settings.points) * settings.equal_to;
-  const discountAmount = round2(Math.min(redeemableValue, remaining));
-  const pointsUsed = settings.points > 0 ? (discountAmount / settings.equal_to) * settings.points : 0;
-
-  return { discountAmount, pointsUsed, userReward };
 };
 
 const resolveShipping = async (subTotalAfterDiscounts) => {
@@ -137,14 +117,7 @@ export const placeOrderService = async (user, data) => {
     cart
   );
 
-  let remaining = round2(cart.subTotal - couponDiscount);
-
-  const { discountAmount: rewardsDiscount, pointsUsed, userReward } = await resolveRewardsDiscount(
-    user.id,
-    data.use_reward,
-    remaining
-  );
-  remaining = round2(remaining - rewardsDiscount);
+  const remaining = round2(cart.subTotal - couponDiscount);
 
   const shipping = await resolveShipping(remaining);
   const grandTotal = round2(remaining + shipping);
@@ -167,7 +140,6 @@ export const placeOrderService = async (user, data) => {
         sub_total: cart.subTotal,
         coupon_discount: couponDiscount || null,
         coupon_title: coupon ? coupon.code : null,
-        rewards_discount: rewardsDiscount || 0,
         grand_total: grandTotal,
         type: data.type || null,
         delivery_day: data.delivery_day || null,
@@ -175,7 +147,6 @@ export const placeOrderService = async (user, data) => {
         delivery_end_time: data.delivery_end_time || null,
         payment_status: "pending",
         order_type: 0,
-        is_deduction: rewardsDiscount > 0 ? 1 : 0,
         seen: 0,
       },
       { transaction }
@@ -227,16 +198,6 @@ export const placeOrderService = async (user, data) => {
       if (!incremented) throw new Error("COUPON_USAGE_LIMIT_REACHED");
 
       await createUsedCouponRepo(user.id, coupon.id, { transaction });
-    }
-
-    if (rewardsDiscount > 0 && userReward) {
-      // Atomic conditional deduction — prevents two concurrent orders from
-      // the same user both redeeming the same points balance.
-      const [affected] = await UserReward.update(
-        { rewards: sequelize.literal(`rewards - ${round2(pointsUsed)}`) },
-        { where: { id: userReward.id, rewards: { [Op.gte]: pointsUsed } }, transaction }
-      );
-      if (affected === 0) throw new Error("REWARDS_BALANCE_CHANGED");
     }
 
     await clearCartService({ user_id: user.id }, { transaction });

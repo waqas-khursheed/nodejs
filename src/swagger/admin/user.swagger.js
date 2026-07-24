@@ -114,7 +114,7 @@
  *     tags: [Admin Users]
  *     summary: Delete a user account
  *     description: >
- *       Cascades: reviews, reset_password_codes, user_rewards, user_addresses are
+ *       Cascades: reviews, reset_password_codes, user_addresses are
  *       deleted. Orders/carts/wishlists/used_coupons keep their rows with user_id set to NULL.
  *     security: [{ bearerAuth: [] }]
  *     parameters:

@@ -1,10 +1,7 @@
 import multer from "multer";
-import path from "path";
-import fs from "fs";
 import { AppError } from "../errors/AppError.js";
 import { resizeUploadedImages } from "./imageResize.js";
-
-const storageRoot = path.join(process.cwd(), "src", "storage", "uploads");
+import { persistUploadedFiles } from "./persistUploads.js";
 
 const ALLOWED_MIME_TYPES = new Set([
   "image/jpeg",
@@ -14,31 +11,6 @@ const ALLOWED_MIME_TYPES = new Set([
 ]);
 
 const MAX_FILE_SIZE = Number(process.env.MAX_UPLOAD_FILE_SIZE_MB || 5) * 1024 * 1024;
-
-// create folder helper
-const createFolderIfNotExist = (folder) => {
-  if (!fs.existsSync(folder)) {
-    fs.mkdirSync(folder, { recursive: true });
-  }
-};
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const moduleName = req.module || "common";
-
-    const folder = path.join(storageRoot, moduleName);
-
-    createFolderIfNotExist(folder);
-
-    cb(null, folder);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName =
-      Date.now() + "-" + Math.round(Math.random() * 1e9);
-
-    cb(null, uniqueName + path.extname(file.originalname).toLowerCase());
-  },
-});
 
 const fileFilter = (req, file, cb) => {
   if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
@@ -53,8 +25,12 @@ const fileFilter = (req, file, cb) => {
   cb(null, true);
 };
 
+// Always buffers in memory instead of writing to disk — the file only ever
+// lands on disk if the active storage driver is "local" (see
+// persistUploads.js/shared/storage), so this same multer config works
+// unchanged whether STORAGE_DRIVER is "local" or "s3".
 const multerUpload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   fileFilter,
   limits: {
     fileSize: MAX_FILE_SIZE,
@@ -67,9 +43,10 @@ const multerUpload = multer({
 });
 
 // Wraps multer's `.single`/`.fields` so every route that accepts an upload
-// automatically gets image resizing too, instead of every route file
-// having to remember to add a second middleware after multer's.
+// automatically gets image resizing and persistence (to whichever storage
+// driver is active) too, instead of every route file having to remember to
+// add those as separate middleware after multer's.
 export const upload = {
-  single: (fieldName) => [multerUpload.single(fieldName), resizeUploadedImages],
-  fields: (fields) => [multerUpload.fields(fields), resizeUploadedImages],
+  single: (fieldName) => [multerUpload.single(fieldName), resizeUploadedImages, persistUploadedFiles],
+  fields: (fields) => [multerUpload.fields(fields), resizeUploadedImages, persistUploadedFiles],
 };

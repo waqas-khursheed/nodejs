@@ -43,8 +43,6 @@ import QueryForm from "./QueryForm.js";
 import RandomCoupon from "./RandomCoupon.js";
 import ResetPasswordCode from "./ResetPasswordCode.js";
 import Review from "./Review.js";
-import RewardsEarningMethod from "./RewardsEarningMethod.js";
-import RewardSetting from "./RewardSetting.js";
 import SideBanner from "./SideBanner.js";
 import SizeChart from "./SizeChart.js";
 import Slide from "./Slide.js";
@@ -56,7 +54,6 @@ import Subscribe from "./Subscribe.js";
 import UsedCoupon from "./UsedCoupon.js";
 import User from "./User.js";
 import UserAddress from "./UserAddress.js";
-import UserReward from "./UserReward.js";
 import WebSetting from "./WebSetting.js";
 import Wishlist from "./Wishlist.js";
 
@@ -106,8 +103,6 @@ const models = {
   RandomCoupon,
   ResetPasswordCode,
   Review,
-  RewardsEarningMethod,
-  RewardSetting,
   SideBanner,
   SizeChart,
   Slide,
@@ -119,7 +114,6 @@ const models = {
   UsedCoupon,
   User,
   UserAddress,
-  UserReward,
   WebSetting,
   Wishlist,
 };
@@ -177,8 +171,6 @@ export {
   RandomCoupon,
   ResetPasswordCode,
   Review,
-  RewardsEarningMethod,
-  RewardSetting,
   SideBanner,
   SizeChart,
   Slide,
@@ -190,7 +182,6 @@ export {
   UsedCoupon,
   User,
   UserAddress,
-  UserReward,
   WebSetting,
   Wishlist,
 };

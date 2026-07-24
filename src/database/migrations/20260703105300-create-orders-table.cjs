@@ -79,11 +79,6 @@ module.exports = {
         allowNull: true,
       },
 
-      rewards_discount: {
-        type: Sequelize.DOUBLE,
-        allowNull: false,
-      },
-
       grand_total: {
         type: Sequelize.DOUBLE,
         allowNull: false,
@@ -118,12 +113,6 @@ module.exports = {
       order_type: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        defaultValue: 0,
-      },
-
-      is_deduction: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
         defaultValue: 0,
       },
 

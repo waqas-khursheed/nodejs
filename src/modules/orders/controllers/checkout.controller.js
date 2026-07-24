@@ -17,7 +17,6 @@ const errorMap = {
   COUPON_EXPIRED: { code: 422, msg: "This coupon has expired" },
   COUPON_USAGE_LIMIT_REACHED: { code: 409, msg: "This coupon has reached its usage limit" },
   COUPON_MIN_ORDER_NOT_MET: { code: 422, msg: "Your order does not meet this coupon's minimum amount" },
-  REWARDS_BALANCE_CHANGED: { code: 409, msg: "Your reward points balance changed, please try again" },
   STOCK_NOT_FOUND: { code: 422, msg: "Selected variation no longer exists" },
   INSUFFICIENT_STOCK: { code: 409, msg: "One or more items in your cart no longer have enough stock" },
   PRODUCT_NOT_FOUND: { code: 404, msg: "One or more products in your cart no longer exist" },

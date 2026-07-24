@@ -100,11 +100,6 @@ Order.init(
       allowNull: true,
     },
 
-    rewards_discount: {
-      type: DataTypes.DOUBLE,
-      allowNull: false,
-    },
-
     grand_total: {
       type: DataTypes.DOUBLE,
       allowNull: false,
@@ -139,12 +134,6 @@ Order.init(
     order_type: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 0,
-    },
-
-    is_deduction: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
       defaultValue: 0,
     },
 

@@ -7,6 +7,7 @@ import { sequelize, testConnection } from "./config/db.js";
 import "./database/models/index.js"; // registers all model associations
 import swaggerSpec from "./config/swagger.js";
 import { apiLimiter } from "./shared/middleware/rateLimiter.js";
+import { storage } from "./shared/storage/index.js";
 import { logger } from "./shared/utils/logger.js";
 import authModule from "./modules/auth/auth.module.js";
 import categoryModule from "./modules/categories/category.module.js";
@@ -19,7 +20,6 @@ import couponModule from "./modules/coupons/coupon.module.js";
 import orderModule from "./modules/orders/order.module.js";
 import userManagementModule from "./modules/users/user.module.js";
 import reviewModule from "./modules/reviews/review.module.js";
-import rewardModule from "./modules/rewards/reward.module.js";
 import cmsModule from "./modules/cms/cms.module.js";
 import settingModule from "./modules/settings/setting.module.js";
 import locationModule from "./modules/locations/location.module.js";
@@ -88,17 +88,25 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get("/api-docs.json", (req, res) => res.json(swaggerSpec));
 
 // =====================================
-// STATIC UPLOADS
+// UPLOADS
 // =====================================
 // helmet()'s default Cross-Origin-Resource-Policy is "same-origin", which
 // makes browsers block <img> loads from the admin/user frontends (different
 // ports = different origins) even though CORS itself allows them — CORP is
 // enforced independently of CORS. Relax it to "cross-origin" for just this
-// static route so uploaded images actually render off-origin.
-app.use(
-  "/uploads",
+// route so uploaded images actually render off-origin.
+//
+// Goes through the active storage driver instead of `express.static` so the
+// exact same URL (`/uploads/:module/:filename`, per lib/http.ts's
+// `uploadUrl()` on both frontends) keeps working whether STORAGE_DRIVER is
+// "local" (streams the file from disk) or "s3" (redirects to the object's
+// public URL) — see shared/storage/index.js.
+app.get(
+  "/uploads/:module/:filename",
   helmet.crossOriginResourcePolicy({ policy: "cross-origin" }),
-  express.static("src/storage/uploads")
+  async (req, res) => {
+    await storage.serve(req.params.module, req.params.filename, res);
+  }
 );
 
 // modules
@@ -113,7 +121,6 @@ couponModule(app);
 orderModule(app);
 userManagementModule(app);
 reviewModule(app);
-rewardModule(app);
 cmsModule(app);
 settingModule(app);
 locationModule(app);

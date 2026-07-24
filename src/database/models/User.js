@@ -40,12 +40,6 @@ class User extends Model {
       onDelete: "CASCADE",
     });
 
-    User.hasMany(models.UserReward, {
-      foreignKey: "user_id",
-      as: "userRewards",
-      onDelete: "CASCADE",
-    });
-
     User.hasMany(models.UserAddress, {
       foreignKey: "user_id",
       as: "userAddresses",
